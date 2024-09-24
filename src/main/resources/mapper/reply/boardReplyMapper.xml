@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.yozmhealth.board.mapper.BoardReplyMapper">
+    <!--특정 게시글의 모든 부모 댓글과 대댓글-->
+    <select id="findAllByBoard" parameterType="Long">
+        select * from reply r where r.BOARD_NO2 = #{boardNo} and r.PARENT_REPLY_NO is null;
+    </select>
+    <!--대댓글을 부모 댓글에 대해 조회-->
+    <select id="parentReply" parameterType="Long">
+        select * from reply r where r.PARENT_REPLY_NO = #{parentReplyNo}
+    </select>
+    <insert id="insertReply" parameterType="com.example.yozmhealth.board.vo.dto.BoardReplyDto$Request">
+        insert into reply(BOARD_NO2, REPLY_AUTHOR, REPLY_CONTENTS, PARENT_REPLY_NO, USER_NO, REPLY_CREATED_TIME, REPLY_UPDATED_TIME)
+        VALUES (#{boardNo2},#{replyAuthor},#{replyContents},#{parentReplyNo},#{userNo},now(),now())
+    </insert>
+    <update id="updateReply" parameterType="com.example.yozmhealth.board.vo.dto.BoardReplyDto$Request">
+        update reply r set r.REPLY_CONTENTS = #{replyContents} where r.REPLY_NO =
+    </update>
+    <delete id="deleteReply" parameterType="Long">
+        delete from reply r where r.REPLY_NO = #{replyNo}
+    </delete>
+</mapper>

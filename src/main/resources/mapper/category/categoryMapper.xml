@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.yozmhealth.board.mapper.CategoryMapper">
+    <!--카테고리 목록-->
+    <select id="categoryList" resultType="com.example.yozmhealth.board.vo.dto.CategoryDto$Response">
+        SELECT
+            c.CAT_NAME,
+            COUNT(b.BOARD_NO) AS post_count
+        FROM
+            category c
+        left join
+            board b
+        on
+            b.BOARD_CODE = c.CAT_CODE
+        WHERE
+            c.CAT_NAME NOT IN ('자유', '공지')
+        group by
+            c.CAT_NAME,c.CAT_NAME;
+    </select>
+
+    <!--카테고리 작성-->
+    <insert id="insertCategory" parameterType="com.example.yozmhealth.board.vo.dto.CategoryDto$Request">
+        insert into category(CAT_CODE, CAT_NAME, BOARD_NO)
+        VALUES (#{catCode},#{catName},#{boardNo})
+    </insert>
+
+    <!--카테고리 삭제-->
+    <delete id="deleteCategory" parameterType="Long">
+        delete from category c where c.CAT_CODE = #{catCode}
+    </delete>
+
+</mapper>
