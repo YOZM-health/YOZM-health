@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="kr"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorator="/layout/mainLayout">
+<th:block th:fragment="headerFragments">
+    <header class="bg-light py-3 mb-4 border-bottom">
+        <div class="container d-flex flex-wrap justify-content-between align-items-center">
+            <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 text-dark text-decoration-none">
+                <span class="fs-4">커뮤니티 </span>
+            </a>
+            <ul class="nav me-auto">
+                <li class="nav-item"><a href="/" class="nav-link link-dark">홈</a></li>
+                <li class="nav-item"><a href="/about" class="nav-link link-dark">소개</a></li>
+                <li class="nav-item"><a href="/contact" class="nav-link link-dark">문의</a></li>
+            </ul>
+            <div>
+                <button class="btn btn-outline-primary me-2">로그인</button>
+                <button class="btn btn-primary">회원가입</button>
+            </div>
+        </div>
+    </header>
+</th:block>
+</html>
