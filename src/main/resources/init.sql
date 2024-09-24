@@ -7,8 +7,8 @@ CREATE TABLE `USER` (
                         `USER_PW` VARCHAR(250) NOT NULL COMMENT '사용자 비밀번호',
                         `USER_EMAIL` VARCHAR(50) NULL COMMENT '사용자 이메일주소',
                         `USER_NAME` VARCHAR(50) NOT NULL COMMENT '사용자 이름',
-                        `USER_BIRTH` VARCHAR(8) NOT NULL COMMENT '사용자 생년월일',
-                        `USER_TEL` VARCHAR(11) NOT NULL COMMENT '사용자 전화번호',
+                        `USER_BIRTH` VARCHAR(100) NOT NULL COMMENT '사용자 생년월일',
+                        `USER_TEL` VARCHAR(100) NOT NULL COMMENT '사용자 전화번호',
                         `USER_ADDR` VARCHAR(300) NULL COMMENT '사용자 주소',
                         `USER_NICKNAME` VARCHAR(50) NOT NULL COMMENT '사용자 닉네임',
                         `ENROLL_DATE` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '사용자 가입일',
@@ -16,7 +16,6 @@ CREATE TABLE `USER` (
                         `USER_DEL_FL` CHAR(1) NOT NULL DEFAULT 'N' COMMENT '탈퇴여부(N:탈퇴X, Y:탈퇴O)',
                         `USER_TYPE` INT NOT NULL DEFAULT 1 COMMENT '회원 유형 (1:일반, 2:트레이너, 3:관리자)',
                         `USER_CENTER` VARCHAR(1000) NULL COMMENT '코치회원 활동센터',
-                        `Field` VARCHAR(255) NULL,
                         PRIMARY KEY (`USER_NO`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -32,6 +31,7 @@ CREATE TABLE `BOARD` (
                          `BOARD_NO` INT auto_increment NOT NULL COMMENT '게시글 번호',
                          `BOARD_TITLE` VARCHAR(200) NOT NULL COMMENT '게시글 제목',
                          `BOARD_CONTENT` TEXT NOT NULL COMMENT '게시글 내용',
+                         `BOARD_AUTHOR` VARCHAR(200) NOT NULL COMMENT '게시글 작성자',
                          `CREATE_DATE` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '작성일',
                          `READ_COUNT` INT NOT NULL DEFAULT 0 COMMENT '조회수',
                          `BOARD_DEL_FL` CHAR(1) NULL DEFAULT 'N' COMMENT '게시글 상태',
@@ -39,6 +39,8 @@ CREATE TABLE `BOARD` (
                          `BOARD_CODE` INT NOT NULL COMMENT '게시판 코드',
                          PRIMARY KEY (`BOARD_NO`)
 );
+# 게시글 임시글 저장기능을 위해서 추가적으로 컬럼을 추가
+ALTER TABLE BOARD ADD COLUMN BOARD_STATUS CHAR(1) DEFAULT 'P' COMMENT '게시글 상태 (P: 작성중, C: 완료)';
 
 CREATE TABLE `CHATTING` (
                             `CHAT_NO` BIGINT NOT NULL COMMENT '채팅 메시지 번호',
