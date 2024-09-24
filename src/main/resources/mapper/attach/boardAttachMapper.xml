@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.yozmhealth.board.mapper.BoardAttachMapper">
+    <!--파일 목록-->
+    <select id="attachByBoardList" parameterType="Long">
+        select * from board_attach a where a.BOARD_NO2 = #{boardNo2}
+    </select>
+    <!--파일 첨부-->
+    <insert id="insertAttach" parameterType="com.example.yozmhealth.board.vo.dto.BoardAttachDto$Response">
+        insert into board_attach (BOARD_NO2, ORIGIN_NAME, STORE_NAME, FILE_SIZE, FILE_PATH)
+        values (#{boardNo2},#{originName},#{storeName},#{fileSize},#{filePath})
+    </insert>
+    <!--파일 삭제-->
+    <delete id="deleteAttach" parameterType="Long">
+        delete from  board_attach a where a.BOARD_NO2 = #{boardNo}
+    </delete>
+    <!--파일 다운로드-->
+    <select id="getFileByOriginName" parameterType="String">
+        select * from board_attach a where a.ORIGIN_NAME = #{originName}
+    </select>
+</mapper>
