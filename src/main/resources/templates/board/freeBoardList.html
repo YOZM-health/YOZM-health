@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="kr"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/mainLayout}">
+<head>
+    <meta charset="UTF-8">
+    <title>자유 게시글 목록</title>
+    <style>
+        .btn-outline-primary {
+            color: black; /* 글자색을 검정색으로 설정 */
+            border: 1px solid black; /* 테두리 색상을 검정색으로 설정 */
+            font-weight: bold; /* 글자 두께를 굵게 설정 */
+        }
+
+        .btn-outline-primary:hover {
+            color: black; /* 호버 시 글자색 유지 */
+            border: 1px solid black; /* 호버 시 테두리 색상 유지 */
+            background-color: transparent; /* 호버 시 배경색 유지 */
+        }
+
+        .btn-outline-primary:focus {
+            color: black; /* 포커스 시 글자색 유지 */
+            border: 1px solid black; /* 포커스 시 테두리 색상 유지 */
+            outline: none; /* 포커스 아웃라인 제거 */
+        }
+    </style>
+</head>
+<body>
+<th:block layout:fragment="contents">
+    <main>
+        <div class="container">
+            <section>
+                <!-- 카테고리 -->
+                <div class="mb-4">
+                    <h2>인기 카테고리</h2>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button th:each="category : ${categoryList}"
+                                th:text="${'#' + category.catName + ' (' + category.postCount + ')'}"
+                                th:onclick="'location.href=\'/category/' + ${category.getCatCode()} + '\''"
+                                class="btn btn-outline-primary">
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 게시글 목록 -->
+                <table class="table table-hover">
+                    <thead class="table-light">
+                    <tr>
+                        <th>제목</th>
+                        <th>작성자</th>
+                        <th>조회수</th>
+                        <th>작성일</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="post : ${boardList}">
+                        <td><a th:href="'/page/' + ${post.boardNo}" th:text="${post.boardTitle}"></a></td>
+                        <td th:text="${post.boardAuthor}"></td>
+                        <td th:text="${post.readCount}"></td>
+                        <td th:text="${#temporals.format(post.createDate, 'yyyy-MM-dd HH:mm')}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+                <!--paging -->
+                <div class="d-none d-md-block">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:if="${prev} == true">
+                            <a th:href="@{/page/list(page=${startPage}-1,perPageNum=${paging.cri.perPageNum})}"
+                               class="page-link">이전</a>
+                        </li>
+                        <li class="page-item"
+                            th:each="idx,iterStat : ${#numbers.sequence(paging.startPage,paging.endPage)}"
+                            th:classappend="${paging.cri.page}==${idx} ? active : null">
+                            <a
+                                    th:href="@{/page/list(page=${idx},perPageNum=${paging.cri.perPageNum})}"
+                                    class="page-link"
+                                    th:text="${idx}"></a>
+                        </li>
+                        <li class="page-item"
+                            th:if="${paging.next}== true and ${paging.endPage > 0}">
+                            <a th:href="@{/page/list(page=${paging.endPage}+1,perPageNum=${paging.cri.perPageNum})}" class="page-link">다음</a>
+                        </li>
+                    </ul>
+                </div>
+                <!--paging end-->
+                <!--search start--->
+                <div class="input-group mb-3">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">선택</button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#">작성자</a></li>
+                        <li><a class="dropdown-item" href="#">제목</a></li>
+                        <li><a class="dropdown-item" href="#">내용</a></li>
+                    </ul>
+                    <input type="text" class="form-control" aria-label="Text input with dropdown button" name="keyword" id="keyword">
+                    <!-- 오른쪽 끝에 추가된 버튼 -->
+                    <button class="btn btn-outline-primary" type="button" id="button-addon3" onclick="searchProc()">검색</button>
+                </div>
+            </section>
+        </div>
+    </main>
+    <script>
+        //검색기능
+        function searchProc() {
+
+        }
+    </script>
+</th:block>
+</body>
+</html>
