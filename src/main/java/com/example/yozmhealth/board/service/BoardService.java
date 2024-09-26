@@ -36,7 +36,8 @@ public class BoardService {
 
     @Transactional(readOnly = true)
     public BoardDto.BoardResponse findByBoardId (Long boardId) {
-        return boardMapper.findByBoardId(boardId).get();
+        return boardMapper.findByBoardId(boardId)
+                .orElseThrow(()-> new RuntimeException("게시글이 존재하지 않습니다."));
     }
 
     //리팩토링
