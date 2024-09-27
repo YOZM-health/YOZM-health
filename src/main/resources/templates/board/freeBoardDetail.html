@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="kr"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/mainLayout}">
+<head>
+    <meta charset="UTF-8">
+    <title>게시글 조회</title>
+    <style>
+        .btn-outline-primary {
+            color: black; /* 글자색을 검정색으로 설정 */
+            border: 1px solid black; /* 테두리 색상을 검정색으로 설정 */
+            font-weight: bold; /* 글자 두께를 굵게 설정 */
+        }
+
+        .btn-outline-primary:hover {
+            color: black; /* 호버 시 글자색 유지 */
+            border: 1px solid black; /* 호버 시 테두리 색상 유지 */
+            background-color: transparent; /* 호버 시 배경색 유지 */
+        }
+
+        .btn-outline-primary:focus {
+            color: black; /* 포커스 시 글자색 유지 */
+            border: 1px solid black; /* 포커스 시 테두리 색상 유지 */
+            outline: none; /* 포커스 아웃라인 제거 */
+        }
+        .next-previous-container {
+            display: flex;
+            justify-content: space-between; /* 양쪽 끝에 배치 */
+            padding: 10px 0; /* 상하 여백 */
+        }
+        .previous-board {
+            flex: 0 1 auto; /* 이전글은 필요한 공간만 차지 */
+        }
+        .next-board {
+            flex: 0 1 auto; /* 다음글도 필요한 공간만 차지 */
+            margin-left: auto; /* 자동 여백을 사용하여 오른쪽으로 밀기 */
+        }
+    </style>
+</head>
+<body>
+<th:block layout:fragment="contents">
+    <div class="container container-with-scroll mt-5">
+        <!-- 카테고리 -->
+        <div class="mb-4">
+            <h2>인기 카테고리</h2>
+            <div class="d-flex flex-wrap gap-2">
+                <button th:each="category : ${category}"
+                        th:text="${'#' + category.catName + ' (' + category.postCount + ')'}"
+                        th:onclick="'location.href=\'/category/' + ${category.getCatCode()} + '\''"
+                        class="btn btn-outline-primary">
+                </button>
+            </div>
+        </div>
+        <!--게시글내용-->
+        <div class="card">
+            <div class="card-header">
+                <input type="hidden" id="boardNo" th:value="${board.boardNo}">
+                <h5 th:text="${board.boardTitle}"/>
+                <small th:text="${#temporals.format(board.createDate, 'yyyy-MM-dd HH:mm')}"/>
+            </div>
+            <div class="card-body">
+                <p th:text="${board.boardContent}"></p>
+                <div class="d-flex">
+                    <span class="badge bg-primary">[[${board.boardAuthor}]]</span>
+                    <span class="ms-auto">조회수: <span th:text="${board.readCount}"/></span>
+                </div>
+                <!-- URL 복사 & Kakao 공유 기능 -->
+                <div class="d-flex justify-content-center my-3">
+                    <div class="d-flex flex-column align-items-center mx-3">
+                        <i class="fa-solid fa-link" onclick="copyURL()" style="cursor: pointer; font-size: 24px"></i>
+                        <span>URL 복사</span>
+                    </div>
+
+                    <div class="d-flex flex-column align-items-center mx-3">
+                        <a class="d-flex flex-column align-items-center mx-3" href="javascript:shareMessage()">
+                            <img src="https://cf.monsterzym.com/images/design/themes/responsive/media/images/addons/mz_community/mz_community_share_icon_kakaotalk.png?v=1"
+                                 style="width: 24px; height: 24px; vertical-align: middle; cursor: pointer">
+                            <span>Kakao 공유하기</span>
+                        </a>
+                    </div>
+                </div>
+                <!--이전글/다음글-->
+                <div class="next-previous-container">
+                    <div class="previous-board" th:each="nextPrevious:${nextPrevious}">
+                        <div th:if="${board.boardNo < nextPrevious.boardNo}">
+                            <a th:href="@{'/page/'+${nextPrevious.boardNo}}">
+                            <span>
+                                다음글
+                            </span>
+                            </a>
+                        </div>
+                        <div class="next-board" th:if="${board.boardNo > nextPrevious.boardNo}">
+                            <a th:href="@{'/page/'+${nextPrevious.boardNo}}">
+                            <span class="ms-auto">
+                                이전글
+                            </span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-outline-primary" type="button" onclick="moveToBoardList()">글목록</button>
+                <button class="btn btn-outline-primary" type="button" onclick="moveToUpdateBoardPage()">글수정</button>
+            </div>
+        </div>
+        <!-- 댓글 리스트 -->
+        <div class="card-footer">
+            <h6>댓글</h6>
+            <div>
+                <div class="mb-2">
+                    <span class="fw-bold">작성자 이름</span>
+                    <span class="text-muted">2024-09-26 19:24:40</span>
+                    <p>댓글 내용</p>
+                </div>
+            </div>
+        </div>
+        <!-- 댓글 입력 폼 -->
+        <div class="mt-4">
+            <form>
+                <div class="mb-3">
+                    <label for="nickname" class="form-label">닉네임</label>
+                    <input type="text" class="form-control" id="nickname" name="nickname" placeholder="닉네임을 입력하세요" required>
+                </div>
+                <div class="mb-3">
+                    <label for="commentContent" class="form-label">댓글 내용</label>
+                    <textarea class="form-control" id="commentContent" name="content" rows="3" placeholder="댓글을 입력하세요" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">댓글 작성</button>
+            </form>
+        </div>
+    </div>
+    <script type="text/javascript" th:src="@{/js/reply/boardReply.js}"></script>
+    <script type="text/javascript" th:src="@{/js/board/boardDetail.js}"></script>
+</th:block>
+</body>
+</html>
