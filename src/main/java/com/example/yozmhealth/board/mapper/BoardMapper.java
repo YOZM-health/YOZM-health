@@ -1,9 +1,9 @@
 package com.example.yozmhealth.board.mapper;
 
-import com.example.yozmhealth.board.vo.BoardVO;
 import com.example.yozmhealth.board.vo.dto.BoardDto;
 import com.example.yozmhealth.config.page.Criteria;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,7 +11,7 @@ import java.util.Optional;
 @Mapper
 public interface BoardMapper {
 
-    List<BoardDto.BoardResponse> findAll(Criteria cri );
+    List<BoardDto.BoardResponse> findAll(Criteria cri);
 
     Optional<BoardDto.BoardResponse> findByBoardId (Long boardNo);
 

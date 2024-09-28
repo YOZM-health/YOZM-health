@@ -17,6 +17,7 @@ public class CategoryDto {
 
     @Getter
     @Builder
+    @ToString
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Response {

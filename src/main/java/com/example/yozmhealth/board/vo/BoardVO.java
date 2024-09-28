@@ -20,6 +20,7 @@ public class BoardVO {
     private String boardAuthor;
     private char boardDelFl; // 게시글 삭제 유무
     private Long readCount;
+    private Long boardCode; // 게시글 카테고리 코드
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime createDate;
 }

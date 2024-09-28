@@ -25,25 +25,43 @@
             border: 1px solid black; /* 포커스 시 테두리 색상 유지 */
             outline: none; /* 포커스 아웃라인 제거 */
         }
+        .input-group {
+            display: flex; /* Flexbox 활성화 */
+            align-items: center; /* 수직 정렬 */
+        }
+
+        .search-select {
+            height: 35px;
+            width: 150px; /* 고정 너비 */
+            margin-right: 10px; /* 오른쪽 여백 */
+        }
+
+        .search-input {
+            height: 35px;
+            flex: 1; /* 남은 공간을 차지하도록 설정 */
+            margin-right: 10px; /* 오른쪽 여백 */
+        }
+
+        #button-addon3 {
+            flex-shrink: 0; /* 버튼이 축소되지 않도록 설정 */
+        }
     </style>
 </head>
 <body>
 <th:block layout:fragment="contents">
     <main>
-        <div class="container">
-            <section>
+        <div class="container container-with-scroll mt-5">
                 <!-- 카테고리 -->
                 <div class="mb-4">
                     <h2>인기 카테고리</h2>
                     <div class="d-flex flex-wrap gap-2">
                         <button th:each="category : ${categoryList}"
                                 th:text="${'#' + category.catName + ' (' + category.postCount + ')'}"
-                                th:onclick="'location.href=\'/category/' + ${category.getCatCode()} + '\''"
+                                th:onclick="'location.href=\'/page/list?boardCode=' + ${category.getCatCode()} + '\''"
                                 class="btn btn-outline-primary">
                         </button>
                     </div>
                 </div>
-
                 <!-- 게시글 목록 -->
                 <table class="table table-hover">
                     <thead class="table-light">
@@ -85,27 +103,30 @@
                     </ul>
                 </div>
                 <!--paging end-->
-                <!--search start--->
-                <div class="input-group mb-3">
-                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">선택</button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#">작성자</a></li>
-                        <li><a class="dropdown-item" href="#">제목</a></li>
-                        <li><a class="dropdown-item" href="#">내용</a></li>
-                    </ul>
-                    <input type="text" class="form-control" aria-label="Text input with dropdown button" name="keyword" id="keyword">
-                    <!-- 오른쪽 끝에 추가된 버튼 -->
-                    <button class="btn btn-outline-primary" type="button" id="button-addon3" onclick="searchProc()">검색</button>
+                <div class="row justify-content-center">
+                    <div class="col-md-6">
+                        <div class="input-group mb-3">
+                            <!-- 검색 선택창 (select) -->
+                            <select class="search-select" id="searchCriteria" name="criteria" aria-label="Search criteria">
+                                <option value="" selected>선택</option>
+                                <option value="A">작성자</option>
+                                <option value="T">제목</option>
+                                <option value="C">내용</option>
+                            </select>
+                            <!-- 입력 필드 -->
+                            <input type="text" class="search-input" aria-label="Text input with dropdown button" name="keyword" id="keyword">
+                            <!-- 검색 버튼 -->
+                            <button class="btn btn-outline-primary" type="button" id="button-addon3" onclick="searchProc()">검색</button>
+                        </div>
+                    </div>
                 </div>
-            </section>
+
+                <div class="d-flex justify-content-end">
+                    <button class="btn btn-outline-primary" type="button" onclick="moveToBoardWritePage()">글작성</button>
+                </div>
         </div>
     </main>
-    <script>
-        //검색기능
-        function searchProc() {
-
-        }
-    </script>
+    <script th:src="@{/js/board/boardList.js}"></script>
 </th:block>
 </body>
 </html>
