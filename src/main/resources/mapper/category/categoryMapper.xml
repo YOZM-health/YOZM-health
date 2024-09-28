@@ -4,6 +4,7 @@
     <!--카테고리 목록-->
     <select id="categoryList" resultType="com.example.yozmhealth.board.vo.dto.CategoryDto$Response">
         SELECT
+            c.CAT_CODE,
             c.CAT_NAME,
             COUNT(b.BOARD_NO) AS post_count
         FROM
@@ -15,7 +16,7 @@
         WHERE
             c.CAT_NAME NOT IN ('자유', '공지')
         group by
-            c.CAT_NAME,c.CAT_NAME;
+            c.CAT_NAME,c.CAT_CODE;
     </select>
 
     <!--카테고리 작성-->
