@@ -64,7 +64,17 @@
                 <p th:text="${board.boardContent}"></p>
                 <div class="d-flex">
                     <span class="badge bg-primary">[[${board.boardAuthor}]]</span>
-                    <span class="ms-auto">조회수: <span th:text="${board.readCount}"/></span>
+                    <span class="ms-auto">조회수: <span th:utext="${board.readCount}"></span></span>
+                </div>
+                <div class="my-3">
+                    <th:block th:unless="${#lists.isEmpty(attachList)}" th:each="fileList:${attachList}">
+                        <a th:href="@{|/api/download/${fileList.getOriginName()}|}">
+                            <span th:text="${fileList.getOriginName()}"></span>
+                        </a>
+                    </th:block>
+                    <th:block th:if="${#lists.isEmpty(attachList)}">
+                        <span>첨부 파일이 없습니다.</span>
+                    </th:block>
                 </div>
                 <!-- URL 복사 & Kakao 공유 기능 -->
                 <div class="d-flex justify-content-center my-3">
@@ -130,8 +140,41 @@
             </form>
         </div>
     </div>
+    <script>
+        //카카오 톡 공유기능
+        Kakao.init(`[[${kakaoApiKey}]]`);
+
+        function shareMessage() {
+            console.log(Kakao.isInitialized());
+            const defaultImageUrl = 'https://example.com/default-image.jpg';
+
+            Kakao.Share.sendDefault({
+                objectType: 'feed',
+                content: {
+                    title: '[[${board.boardTitle}]]', // 여기서 게시글 제목을 넣어주세요
+                    description: '[[${board.boardContent}]]', // 게시글 설명을 넣어주세요
+                    imageUrl: defaultImageUrl, // 게시글 이미지 URL
+                    link: {
+                        mobileWebUrl: 'http://localhost:8091/page/${board.boardNo}', // 모바일 웹 URL
+                        webUrl: 'http://localhost:8091/page/${board.boardNo}' // 웹 URL
+                    }
+                },
+                buttons: [
+                    {
+                        title: '웹에서 보기',
+                        link: {
+                            mobileWebUrl: 'http://localhost:8091/page/${board.boardNo}',
+                            webUrl: 'http://localhost:8091/page/${board.boardNo}'
+                        }
+                    }
+                ]
+            });
+        }
+    </script>
     <script type="text/javascript" th:src="@{/js/reply/boardReply.js}"></script>
-    <script type="text/javascript" th:src="@{/js/board/boardDetail.js}"></script>
+    <script type="text/javascript" th:src="@{/js/board/boardDetail.js}">
+
+    </script>
 </th:block>
 </body>
 </html>
