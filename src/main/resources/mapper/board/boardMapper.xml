@@ -3,7 +3,7 @@
 <mapper namespace="com.example.yozmhealth.board.mapper.BoardMapper">
     <!--게시글 목록(페이징 + 검색) +공지 게시글 추가-->
     <select id="findAll" resultType="com.example.yozmhealth.board.vo.dto.BoardDto$BoardResponse">
-        select
+        SELECT
             b.BOARD_NO,
             b.BOARD_TITLE,
             b.BOARD_CONTENT,
@@ -12,25 +12,25 @@
             b.BOARD_CODE,
             b.BOARD_STATUS,
             b.CREATE_DATE
-        from
+        FROM
             board b
-        where
-            b.BOARD_DEL_FL = 'N' and b.BOARD_STATUS = 'C'
-        order by b.BOARD_NO desc
-        <trim prefix="WHERE" prefixOverrides="AND|OR">
-            <!-- 게시글 검색 -->
-            <if test="searchType=='T'.toString() and keyword != null and keyword != '' ">
-                AND board_title like CONCAT('%', #{keyword}, '%')
-            </if>
-            <if test="searchType=='C'.toString() and keyword != null and keyword != '' ">
-                AND board_content like CONCAT('%', #{keyword}, '%')
-            </if>
-            <if test="searchType=='A'.toString() and keyword != null and keyword != '' ">
-                AND board_author like CONCAT('%', #{keyword}, '%')
-            </if>
-        </trim>
-        <!--페이징-->
-        LIMIT #{perPageNum}	 OFFSET #{pageStart}
+        WHERE
+            b.BOARD_DEL_FL = 'N' AND b.BOARD_STATUS = 'C'
+        <if test="boardCode != null and boardCode != 0">
+            AND b.BOARD_CODE = #{boardCode}
+        </if>
+        <if test="searchType == 'T'.toString() and keyword != null and keyword != ''">
+            AND b.BOARD_TITLE LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="searchType == 'C'.toString() and keyword != null and keyword != ''">
+            AND b.BOARD_CONTENT LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="searchType == 'A'.toString() and keyword != null and keyword != ''">
+            AND b.BOARD_AUTHOR LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY
+        b.BOARD_NO DESC
+        LIMIT #{perPageNum} OFFSET #{pageStart}
     </select>
 
     <!--게시글 조회-->
@@ -39,32 +39,68 @@
             b.board_no,
             b.board_title,
             b.board_content,
+            b.board_author,
             b.read_count,
             b.create_date
         from
             board b
         where
-            b.BOARD_NO = #{id} and b.board_del_fl = 'N' and b.BOARD_STATUS = 'P'
+            b.BOARD_NO = #{boardNo} and b.board_del_fl = 'N' and b.BOARD_STATUS = 'C'
     </select>
 
-    <!--게시글 조회수-->
+    <!--게시글 갯수-->
     <select id="boardTotalCount" resultType="Long">
-        select count(*) from board b
+        select
+            count(*)
+        from
+            board b
+        where
+            b.BOARD_STATUS = 'C' and b.BOARD_DEL_FL = 'N'
+        <if test="boardCode != null and boardCode != 0">
+            AND b.BOARD_CODE = #{boardCode}
+        </if>
+        <if test="searchType == 'T'.toString() and keyword != null and keyword != ''">
+            AND b.BOARD_TITLE like CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="searchType == 'C'.toString() and keyword != null and keyword != ''">
+            AND b.BOARD_CONTENT like CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="searchType == 'A'.toString() and keyword != null and keyword != ''">
+            AND b.BOARD_AUTHOR like CONCAT('%', #{keyword}, '%')
+        </if>
+    </select>
+
+    <!--임시 게시글 갯수-->
+    <select id="tempBoardTotalCount">
+        select
+            count(*)
+        from
+            board b
+        where
+            b.BOARD_STATUS = 'P' and b.BOARD_DEL_FL = 'N'
     </select>
 
     <!--자유 게시글 작성-->
     <insert id="insertBoard" parameterType="com.example.yozmhealth.board.vo.dto.BoardDto$BoardRequest" useGeneratedKeys="true" keyProperty="boardNo">
-        insert into board(board_title,board_content,board_author,board_del_fl,board_code,read_count,create_date)
-        values (#{boardTitle},#{boardContent},#{boardAuthor},'N',1,0,now())
+        insert into board (board_title,board_content,board_author,board_del_fl,board_code,board_status,user_no,read_count,create_date)
+        values (#{boardTitle},#{boardContent},#{boardAuthor},'N',#{boardCode},#{boardStatus},#{userNo},0,now())
     </insert>
 
     <!--게시글 수정-->
     <update id="updateBoard">
         update
             board b
-        set
-            b.BOARD_CONTENT = #{boardContent},
-            b.BOARD_TITLE = #{boardTitle}
+        <set>
+            <if test="boardContent neq null and boardContent neq ''">
+                b.BOARD_CONTENT = #{boardContent},
+            </if>
+            <if test="boardTitle neq null and boardTitle neq ''">
+                b.BOARD_TITLE = #{boardTitle},
+            </if>
+            <if test="createDate neq null and createDate neq ''">
+                b.CREATE_DATE = now()
+            </if>
+        </set>
         where
             b.BOARD_DEL_FL = 'N' and b.BOARD_NO = #{boardNo}
     </update>
@@ -84,7 +120,7 @@
         update
             board b
         set
-            b.READ_COUNT = b.BOARD_NO + 1
+            b.READ_COUNT = b.READ_COUNT + 1
         where
             b.BOARD_NO = #{boardNo} and b.BOARD_DEL_FL = 'N';
     </update>
@@ -99,9 +135,9 @@
             board b
         where
             BOARD_NO in(
-                (select b.BOARD_NO from board where b.BOARD_NO < #{boardNo}
+                (select b.BOARD_NO from board b where b.BOARD_NO < #{boardNo}
                 order by BOARD_NO desc limit 1),
-                (select b.BOARD_NO from board where b.BOARD_NO > #{boardNo}
+                (select b.BOARD_NO from board b where b.BOARD_NO > #{boardNo}
                 order by BOARD_NO limit 1)
             )
         order by BOARD_NO desc;

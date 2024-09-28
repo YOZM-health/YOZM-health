@@ -1,10 +1,10 @@
 package com.example.yozmhealth.config.page;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Setter
 @Getter
+@RequiredArgsConstructor
 public class Paging {
 
     private Long totalCount; // 게시판 전체 데이터 개수
@@ -15,8 +15,8 @@ public class Paging {
     private boolean prev; // 페이징 이전 버튼 활성화 여부
     private boolean next; // 페이징 다음 버튼 활성화 여부
     private String keyword;//키워드
-    private String searchType;//검색 카테고리.
-
+    private String searchType;//검색타입
+    private Long boardCode; // 카테고리 코드(번호)
     private Criteria cri;
 
     public Long getTotalCount() {
