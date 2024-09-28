@@ -20,16 +20,22 @@ public class FileUtils {
 
     public List<BoardAttachDto.Response> fileParse( List<MultipartFile>files) throws IOException {
         List<BoardAttachDto.Response> attachments = new ArrayList<>();
+
+        File fileFolder = new File(filePaths);
+        //경로가 존재를 하지 않은 경우
+        if(!fileFolder.exists()){
+            boolean wasSuccessful = fileFolder.mkdirs();
+            System.out.println(wasSuccessful);
+            // 디렉터리 생성에 실패했을 경우
+            if(!wasSuccessful)
+                System.out.println("file: was not successful");
+        }
         //파일 첨부
         if(!files.isEmpty()&& files != null) {
             for(MultipartFile file : files) {
                 String originalFilename = file.getOriginalFilename();
                 String storedFilename = UUID.randomUUID().toString() + "_" + originalFilename;
-                String filePath = filePaths;
-
-                // 파일 저장
-                File dest = new File(filePath);
-                file.transferTo(dest);
+                String filePath = filePaths+File.separator+storedFilename; //파일경로: 저장소/uuid 의 파일명
 
                 //첨부파일 디비 저장
                 BoardAttachDto.Response attachDto = BoardAttachDto
@@ -43,6 +49,12 @@ public class FileUtils {
                         .build();
 
                 attachments.add(attachDto);
+                // 파일 저장
+                File dest = new File(filePath);
+                file.transferTo(dest);
+                //파일 권한 설정(읽기,쓰기권한)
+                dest.setWritable(true);
+                dest.setReadable(true);
             }
         }
         return attachments;

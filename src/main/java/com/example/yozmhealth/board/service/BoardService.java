@@ -1,6 +1,5 @@
 package com.example.yozmhealth.board.service;
 
-import com.example.yozmhealth.board.mapper.BoardAttachMapper;
 import com.example.yozmhealth.board.mapper.BoardMapper;
 import com.example.yozmhealth.board.vo.dto.BoardAttachDto;
 import com.example.yozmhealth.board.vo.dto.BoardDto;
@@ -24,7 +23,7 @@ public class BoardService {
 
     private final FileUtils fileUtils;
 
-    private final BoardAttachMapper boardAttachMapper;
+    private final BoardAttachService boardAttachService;
 
     @Transactional(readOnly = true)
     public List<BoardDto.BoardResponse> findAll (Criteria criteria) {
@@ -40,16 +39,20 @@ public class BoardService {
                 .orElseThrow(()-> new RuntimeException("게시글이 존재하지 않습니다."));
     }
 
-    //리팩토링
+    //게시글 작성
     public Long insertBoard(BoardDto.BoardRequest request) throws IOException {
         Long createResult = boardMapper.insertBoard(request);
+        //첨부 파일이 없는 경우
+        if(request.getAttachLists().isEmpty()||request.getAttachLists() == null){
+            return createResult;
+        }
         //첨부파일이 있는 경우
         List<BoardAttachDto.Response> list = fileUtils.fileParse(request.getAttachLists());
 
         if(list != null) {
             for(BoardAttachDto.Response dto : list) {
                 dto.setBoardNo2(request.getBoardNo());
-                boardAttachMapper.insertAttach(dto);
+                boardAttachService.insertAttach(dto);
             }
         }
         return createResult;
@@ -58,7 +61,12 @@ public class BoardService {
     //리팩토링
     public Long updateBoard(BoardDto.BoardRequest request) throws IOException {
         Long updateResult = boardMapper.updateBoard(request);
-        List<BoardAttachDto.Response> list = boardAttachMapper.attachByBoardList(request.getBoardNo());
+
+        if(request.getAttachLists().isEmpty()||request.getAttachLists() == null){
+            return updateResult;
+        }
+
+        List<BoardAttachDto.Response> list = boardAttachService.attachList(request.getBoardNo());
         
         //파일이 있는 경우
         if(!list.isEmpty()) {
@@ -70,14 +78,14 @@ public class BoardService {
                     file.delete();
                 }
                 //디비에서 삭제
-                boardAttachMapper.deleteAttach(request.getBoardNo());
+                boardAttachService.deleteAttach(request.getBoardNo());
             }
             //파일  업로드
             list = fileUtils.fileParse(request.getAttachLists());
             //파일 디비 저장
             for(BoardAttachDto.Response dto : list) {
                 dto.setBoardNo2(request.getBoardNo());
-                boardAttachMapper.insertAttach(dto);
+                boardAttachService.insertAttach(dto);
             }
         }
         return updateResult;
@@ -87,7 +95,7 @@ public class BoardService {
         //게시글 삭제
         boardMapper.deleteBoard(boardNo);
         //첨부파일목록
-        List<BoardAttachDto.Response> attachList = boardAttachMapper.attachByBoardList(boardNo);
+        List<BoardAttachDto.Response> attachList = boardAttachService.attachList(boardNo);
 
         if(!attachList.isEmpty()) {
             for (int i = 0; i< attachList.size(); i++) {
@@ -98,7 +106,7 @@ public class BoardService {
                     file.delete();
                 }
                 //디비에 있는 첨부파일 삭제
-                boardAttachMapper.deleteAttach(boardNo);
+                boardAttachService.deleteAttach(boardNo);
             }
         }
     }
