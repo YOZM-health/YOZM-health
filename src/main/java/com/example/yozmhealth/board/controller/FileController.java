@@ -2,14 +2,15 @@ package com.example.yozmhealth.board.controller;
 
 import com.example.yozmhealth.board.mapper.BoardAttachMapper;
 import com.example.yozmhealth.board.vo.dto.BoardAttachDto;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -23,12 +24,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+@Log4j2
 @RestController
-@AllArgsConstructor
+@RequiredArgsConstructor
 @RequestMapping("/api")
 public class FileController {
 
-    private final WebApplicationContext context;
+    @Value("${server.file.upload}")
+    private String uploadDirectory;
 
     private final BoardAttachMapper attachMapper;
 
@@ -50,23 +53,30 @@ public class FileController {
     @PostMapping("/image-upload")
     public ResponseEntity<?> imageUpload(@RequestParam("file") MultipartFile file) throws IllegalStateException {
         try {
-            String uploadDirectory = context.getServletContext().getRealPath("/resources/images/upload");
+            //해당 부분은 리팩토링이 필요
+            String uploadPath = uploadDirectory + "summernote/";
+            log.info(uploadPath);
 
+            // 디렉토리가 존재하지 않으면 생성
+            File directory = new File(uploadPath);
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+            log.info(directory);
             String originalFileName = file.getOriginalFilename();
-
+            log.info(originalFileName);
             String fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
 
             String uuidFileName = UUID.randomUUID() + fileExtension;
 
-            file.transferTo(new File(uploadDirectory, uuidFileName));
+            file.transferTo(new File(uploadPath, uuidFileName));
 
-            System.out.println(uploadDirectory);
             // 이미지 URL 생성
-            String imageUrl = "/resources/images/upload/" + uuidFileName;
-
+            String imageUrl = "/attachFolder/summernote/" + uuidFileName;
+            log.info(imageUrl);
             Map<String, String> response = new HashMap<>();
             response.put("url", imageUrl);
-
+            log.info(response.get("url"));
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("이미지 업로드 실패");
@@ -78,9 +88,10 @@ public class FileController {
     public ResponseEntity<?> deleteImage(@RequestParam("file") String fileName) {
         try {
             // 서버에 저장된 이미지 경로
-            String uploadDirectory = context.getResource("classpath:resources/images/upload").getFile().getAbsolutePath();
+            String uploadDirectory = "C://attachFolder//summernote";
             Path filePath = Paths.get(uploadDirectory, fileName);
-
+            log.info(uploadDirectory);
+            log.info(filePath);
             // 파일 삭제
             File file = filePath.toFile();
             if (file.exists()) {
