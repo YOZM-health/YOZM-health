@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,17 +61,27 @@ public class BoardService {
 
     //리팩토링
     public Long updateBoard(BoardDto.BoardRequest request) throws IOException {
+        List<BoardAttachDto.Response> list = new ArrayList<>();
         Long updateResult = boardMapper.updateBoard(request);
-
+        //첨부파일이 없는 경우 게시글 수정기능
         if(request.getAttachLists().isEmpty()||request.getAttachLists() == null){
             return updateResult;
         }
-
-        List<BoardAttachDto.Response> list = boardAttachService.attachList(request.getBoardNo());
+        //첨부 파일 목록
+        list = boardAttachService.attachList(request.getBoardNo());
         
         //파일이 있는 경우
         if(!list.isEmpty()) {
-            //저장위치 삭제
+            //저장된 이미지 삭제
+            /*for(BoardAttachDto.Response response : list){
+                String filePath = response.getFilePath();
+                File file = new File(filePath);
+                if(file.exists()) {
+                    file.delete();
+                }
+                //디비에서 삭제
+                boardAttachService.deleteAttach(request.getBoardNo());
+            }*/
             for(int i=0; i< list.size(); i++) {
                 String filePath = list.get(i).getFilePath();
                 File file = new File(filePath);
@@ -80,6 +91,8 @@ public class BoardService {
                 //디비에서 삭제
                 boardAttachService.deleteAttach(request.getBoardNo());
             }
+        }
+        if(!request.getAttachLists().isEmpty() && request.getAttachLists() != null) {
             //파일  업로드
             list = fileUtils.fileParse(request.getAttachLists());
             //파일 디비 저장

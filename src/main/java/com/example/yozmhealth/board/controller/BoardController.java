@@ -146,8 +146,10 @@ public class BoardController {
         ModelAndView mv = new ModelAndView();
         //게시글 단일 조회
         BoardDto.BoardResponse boardResponse = boardService.findByBoardId(boardNo);
-        //첨부파일 조회
+        //카테고리 목록
+        List<CategoryDto.Response> categoryDtoList = categoryService.categoryList();
 
+        mv.addObject("category",categoryDtoList);
         mv.addObject("board",boardResponse);
         mv.setViewName("/board/freeBoardEdite");
 
@@ -158,7 +160,7 @@ public class BoardController {
     @PutMapping("/{id}")
     public Long updateBoardProc(@PathVariable("id") Long boardNo,
                                 @RequestPart(value = "boardDto")BoardDto.BoardRequest request,
-                                @RequestPart(value = "attachments") List<MultipartFile> attachments) throws IOException {
+                                @RequestPart(value = "attachments",required = false) List<MultipartFile> attachments) throws IOException {
 
         request.setBoardNo(boardNo);
         // attachments가 null이 아닌 경우에만 isEmpty()를 호출

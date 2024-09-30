@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="kr"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/mainLayout}">
+<head>
+    <meta charset="UTF-8">
+    <title>게시글 수정 페이지</title>
+</head>
+<body>
+<th:block layout:fragment="contents">
+    <div class="container container-with-scroll mt-5">
+        <!-- 카테고리 -->
+        <div class="mb-4">
+            <h2>인기 카테고리</h2>
+            <div class="d-flex flex-wrap gap-2">
+                <button th:each="category : ${category}"
+                        th:text="${'#' + category.catName + ' (' + category.postCount + ')'}"
+                        th:onclick="'location.href=\'/category/' + ${category.getCatCode()} + '\''"
+                        class="btn btn-outline-secondary category-btn">
+                </button>
+            </div>
+        </div>
+        <!-- 카테고리 -->
+        <div class="mb-3 row">
+            <label for="category" class="col-sm-2 col-form-label">카테고리</label>
+            <div class="col-sm-10">
+                <select class="form-select" id="category" name="category">
+                    <option value="">선택</option> <!-- 기본 선택 옵션 -->
+                    <th:block th:each="categoryDto : ${category}">
+                        <option th:value="${categoryDto.catCode}"
+                                th:text="${categoryDto.catName}"
+                                th:selected="${board.boardCode == categoryDto.catCode}">
+                        </option>
+                    </th:block>
+                </select>
+            </div>
+        </div>
+        <!-- 게시글 작성 폼 -->
+        <form method="post" id="boardWriteForm" enctype="multipart/form-data">
+            <input type="hidden" name="boardNo" id="boardNo" th:value="${board.boardNo}">
+            <!--회원 번호(해당 번호는 시큐리티인증 객체를 완성을 하고 추가적으로 수정-->
+            <input type="hidden" name="userNo" id="userNo" th:value="1">
+            <!-- 제목 -->
+            <div class="mb-3 row">
+                <label for="title" class="col-sm-2 col-form-label">제목</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="title" name="title" th:value="${board.boardTitle}">
+                </div>
+            </div>
+
+            <!-- 닉네임 -->
+            <div class="mb-3 row">
+                <label for="nickname" class="col-sm-2 col-form-label">닉네임</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="nickname" name="nickname" th:value="${board.boardAuthor}">
+                </div>
+            </div>
+
+            <!-- 내용 (summer note 적용하기.)-->
+            <div class="mb-3 row">
+                <label for="content" class="col-sm-2 col-form-label">내용</label>
+                <div class="col-sm-10">
+                    <textarea class="form-control" id="content" name="content" rows="10" th:utext="${board.boardContent}"></textarea>
+                </div>
+            </div>
+            <script th:inline="javascript">
+                $(document).ready(function () {
+                    $('#content').summernote({
+                        // 에디터 크기 설정
+                        height: 800,
+                        // 에디터 한글 설정
+                        lang: 'ko-KR',
+                        toolbar: [
+                            // 글자 크기 설정
+                            ['fontsize', ['fontsize']],
+                            // 글자 [굵게, 기울임, 밑줄, 취소 선, 지우기]
+                            ['style', ['bold', 'italic', 'underline','strikethrough', 'clear']],
+                            // 글자색 설정
+                            ['color', ['color']],
+                            // 표 만들기
+                            ['table', ['table']],
+                            // 서식 [글머리 기호, 번호매기기, 문단정렬]
+                            ['para', ['ul', 'ol', 'paragraph']],
+                            // 줄간격 설정
+                            ['height', ['height']],
+                            // 이미지 첨부
+                            ['insert',['picture']]
+                        ],
+                        // 추가한 글꼴
+                        fontNames: ['Arial', 'Arial Black', 'Comic Sans MS', 'Courier New','맑은 고딕','궁서','굴림체','굴림','돋음체','바탕체'],
+                        // 추가한 폰트사이즈
+                        fontSizes: ['8','9','10','11','12','14','16','18','20','22','24','28','30','36','50','72','96'],
+                        focus : true,
+                        // callbacks은 이미지 업로드 처리입니다.
+                        callbacks : {
+                            onImageUpload : function(files, editor, welEditable) {
+                                for (var i = 0; i < files.length; i++) {
+                                    imageUploader(files[i], this);
+                                }
+                            },
+                            onMediaDelete: function($target, editor, $editable) {
+                                if (confirm('이미지를 삭제하시겠습니까?')) {
+                                    var deletedImageUrl = $target.attr('src').split('/').pop()
+                                    // ajax 함수 호출
+                                    deleteSummernoteImageFile(deletedImageUrl)
+                                }
+                            }
+                        }
+                    });
+                    // 서버에서 받아온 내용으로 Summernote에 내용 설정
+                    const initialContent = /*[[${board.boardContent}]]*/ ''; // Thymeleaf로 내용을 설정
+                    $('#content').summernote('code', initialContent); // Summernote에 내용 설정
+                });
+
+                //에디터 이미지 업로드 기능
+                function imageUploader(file, el) {
+                    var formData = new FormData();
+                    formData.append('file', file);
+                    console.log(file);
+                    $.ajax({
+                        data : formData,
+                        type : "POST",
+                        url : '/api/image-upload',
+                        contentType : false,
+                        processData : false,
+                        enctype : 'multipart/form-data'
+                    }).done(function (data){
+                        console.log(data);
+                        let imageUrl = data.url; // JSON 형식으로 응답된 URL
+                        //서버 경로에 추가하기
+                        $(el).summernote('insertImage', imageUrl,
+                            function($image) {
+                                $image.css('width', "100%");
+                                // 이미지에 드래그로 크기를 조절할 수 있도록 설정
+                                $image.attr('contenteditable', false); // 이미지 수정 불가능 설정
+                            });
+                        console.log(data);
+                    }).fail(function(error){
+                        console.log(error);
+                    });
+                }
+                //에디터 이미지 삭제
+                function deleteSummernoteImageFile(imageName) {
+
+                    data = new FormData()
+
+                    data.append('file', imageName)
+
+                    $.ajax({
+                        data: data,
+                        type: 'POST',
+                        url: '/api/deleteSummernoteImageFile',
+                        contentType: false,
+                        enctype: 'multipart/form-data',
+                        processData: false,
+                    }).done(function (response) {
+                        alert("이미지 삭제 성공: " + response);
+                        // 삭제한 이미지의 src 속성으로부터 $target을 찾아서 제거
+                        $('#content img[src*="' + imageName + '"]').remove(); // 삭제된 이미지 삭제
+                    }).fail(function (error) {
+                        console.error("이미지 삭제 실패: ", error);
+                    });
+                }
+            </script>
+            <!-- 첨부파일 -->
+            <div class="mb-3 row">
+                <label class="col-sm-2 col-form-label">첨부파일</label>
+                <div class="col-sm-10">
+                    <input type="file" class="form-control file-input" name="files" id="file1" multiple>
+                    <input type="file" class="form-control file-input" name="files" id="file2" multiple>
+                    <input type="file" class="form-control file-input" name="files" id="file3" multiple>
+                    <input type="file" class="form-control file-input" name="files" id="file4" multiple>
+                    <input type="file" class="form-control file-input" name="files" id="file5" multiple>
+                    <small class="form-text text-muted">png, gif, jpg, jpeg 파일만 업로드가 가능합니다.</small>
+                </div>
+            </div>
+
+            <!-- 버튼 -->
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn btn-secondary me-2" onclick="moveToBoardList()">목록</button>
+                <button type="button" class="btn btn-primary" onclick="boardUpdateProc()">글수정</button>
+                <button type="button" class="btn btn-primary" onclick="boardDeleteProc()">글삭제</button>
+            </div>
+        </form>
+    </div>
+    <script type="text/javascript">
+        //파일 검증
+        function validateFile(fileInput) {
+            const allowedExtensions = ['png', 'gif', 'jpg', 'jpeg']; // 허용하는 파일 확장자 목록
+            let valid = true;
+
+            Array.from(fileInput.files).forEach(file => {
+                const fileName = file.name;
+                const fileExtension = fileName.split('.').pop().toLowerCase();
+
+                if (!allowedExtensions.includes(fileExtension)) {
+                    alert(`${fileName} 파일은 허용되지 않는 형식입니다.`);
+                    valid = false; // 허용되지 않는 파일 형식일 경우 valid를 false로 설정
+                }
+            });
+
+            return valid;
+        }
+        //게시글 삭제
+        function boardDeleteProc() {
+            let boardNo = document.getElementById('boardNo').value;
+
+            $.ajax({
+                url:'/page/'+boardNo,
+                type:'DELETE'
+            }).done(function(resp){
+                console.log(resp);
+                alert('게시글이 삭제 되었습니다.');
+                location.href='/page/list'
+            })
+        }
+
+        //게시글 수정
+        function boardUpdateProc() {
+            let formDate = new FormData();
+            let boardNo = document.getElementById('boardNo').value;
+            let title = document.getElementById('title').value;
+            let author = document.getElementById('nickname').value;
+            let boardCode = document.getElementById('category').value;
+            let userNo = document.getElementById('userNo').value;
+            let contents = $('#content').summernote('code');;
+
+            const data  = {
+                boardTitle : title,
+                boardContent : contents,
+                boardAuthor : author,
+                boardCode : boardCode,
+                userNo : userNo
+            }
+
+            formDate.append('boardDto',new Blob([JSON.stringify(data)], {type: "application/json"}));
+
+            let files = document.querySelectorAll('input[type="file"]');
+            let valid = true;
+
+            files.forEach((fileInput, index) => {
+                if (!validateFile(fileInput)) {
+                    valid = false;
+                    return; // 파일이 유효하지 않으면 중단
+                }
+                Array.from(fileInput.files).forEach(file => {
+                    console.log(file);
+                    formDate.append('attachments', file);
+                });
+            });
+
+            if (!valid) {
+                alert('파일 형식에 문제가 있습니다. 다시 확인해주세요.');
+                return; // 유효하지 않으면 폼 제출 중단
+            }
+
+            $.ajax({
+                url:'/page/'+boardNo,
+                type:'PUT',
+                data:formDate,
+                contentType: false,
+                processData: false,
+                cache: false,
+                enctype: 'multipart/form-data'
+            }).done(function(resp){
+                alert('게시글이 수정되었습니다.');
+                location.href = '/page/list';
+            }).fail(function (error){
+                console.error('게시글 수정 실패:', error);
+                alert('게시글 수정에 실패했습니다.');
+            });
+        }
+    </script>
+</th:block>
+</body>
+</html>
