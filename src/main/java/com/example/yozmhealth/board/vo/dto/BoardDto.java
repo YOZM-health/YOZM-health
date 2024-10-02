@@ -44,6 +44,7 @@ public class BoardDto {
         private char boardStatus;
         private Long boardCode; // 게시글 카테고리 코드
         private Long readCount;
+        private Long userNo; //회원 번호
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
         private LocalDateTime createDate;
     }

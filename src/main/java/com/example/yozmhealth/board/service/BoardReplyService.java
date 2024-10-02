@@ -1,13 +1,13 @@
 package com.example.yozmhealth.board.service;
 
 import com.example.yozmhealth.board.mapper.BoardReplyMapper;
+import com.example.yozmhealth.board.vo.dto.BoardDto;
 import com.example.yozmhealth.board.vo.dto.BoardReplyDto;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Transactional
@@ -30,6 +30,13 @@ public class BoardReplyService {
     }
 
     public Long insertBoardReply (BoardReplyDto.Request request) {
+        if(request.getParentReplyNo()!= null) {
+            BoardReplyDto.Response parentReply = boardReplyMapper.findByReplyId(request.getParentReplyNo());
+            
+            if(parentReply == null){
+                throw new RuntimeException("댓글이 없습니다.");
+            }
+        }
         return boardReplyMapper.insertReply(request);
     }
 

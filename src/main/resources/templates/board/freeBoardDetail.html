@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="kr"
+      layout:decorate="~{layout/mainLayout}"
       xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/mainLayout}">
+      xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>게시글 조회</title>
@@ -25,14 +25,17 @@
             border: 1px solid black; /* 포커스 시 테두리 색상 유지 */
             outline: none; /* 포커스 아웃라인 제거 */
         }
+
         .next-previous-container {
             display: flex;
             justify-content: space-between; /* 양쪽 끝에 배치 */
             padding: 10px 0; /* 상하 여백 */
         }
+
         .previous-board {
             flex: 0 1 auto; /* 이전글은 필요한 공간만 차지 */
         }
+
         .next-board {
             flex: 0 1 auto; /* 다음글도 필요한 공간만 차지 */
             margin-left: auto; /* 자동 여백을 사용하여 오른쪽으로 밀기 */
@@ -45,29 +48,35 @@
         <!-- 카테고리 -->
         <div class="mb-4">
             <h2>인기 카테고리</h2>
-            <div class="d-flex flex-wrap gap-2">
-                <button th:each="category : ${category}"
-                        th:text="${'#' + category.catName + ' (' + category.postCount + ')'}"
-                        th:onclick="'location.href=\'/category/' + ${category.getCatCode()} + '\''"
-                        class="btn btn-outline-primary">
-                </button>
-            </div>
+            <th:block th:unless="${#lists.isEmpty(category)}">
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-outline-primary"
+                            th:each="category : ${category}"
+                            th:onclick="'location.href=\'/category/' + ${category.getCatCode()} + '\''"
+                            th:text="${'#' + category.catName + ' (' + category.postCount + ')'}">
+                    </button>
+                </div>
+            </th:block>
+            <th:block th:if="${#lists.isEmpty(category)}">
+                카테고리가 없습니다.
+            </th:block>
         </div>
         <!--게시글내용-->
         <div class="card">
             <div class="card-header">
-                <input type="hidden" id="boardNo" th:value="${board.boardNo}">
+                <input id="userNo" th:value="${board.userNo}" type="hidden">
+                <input id="boardNo" th:value="${board.boardNo}" type="hidden">
                 <h5 th:text="${board.boardTitle}"/>
-                <small th:text="${#temporals.format(board.createDate, 'yyyy-MM-dd HH:mm')}"/>
+                <span class="badge bg-primary">[[${board.boardAuthor}]]</span>
+                <small style="float: right;" th:text="${#temporals.format(board.createDate, 'yyyy-MM-dd HH:mm')}"/>
             </div>
             <div class="card-body">
-                <p th:text="${board.boardContent}"></p>
+                <p th:utext="${board.boardContent}"></p>
                 <div class="d-flex">
-                    <span class="badge bg-primary">[[${board.boardAuthor}]]</span>
                     <span class="ms-auto">조회수: <span th:utext="${board.readCount}"></span></span>
                 </div>
                 <div class="my-3">
-                    <th:block th:unless="${#lists.isEmpty(attachList)}" th:each="fileList:${attachList}">
+                    <th:block th:each="fileList:${attachList}" th:unless="${#lists.isEmpty(attachList)}">
                         <a th:href="@{|/api/download/${fileList.getOriginName()}|}">
                             <span th:text="${fileList.getOriginName()}"></span>
                         </a>
@@ -91,6 +100,35 @@
                         </a>
                     </div>
                 </div>
+                <script>
+                    Kakao.init(`[[${kakaoApiKey}]]`);
+
+                    function shareMessage() {
+                        console.log(Kakao.isInitialized());
+                        const defaultImageUrl = 'https://example.com/default-image.jpg';
+                        Kakao.Share.sendDefault({
+                            objectType: 'feed',
+                            content: {
+                                title: '[[${board.boardTitle}]]', // 여기서 게시글 제목을 넣어주세요
+                                description: '[[${board.boardContent}]]', // 게시글 설명을 넣어주세요
+                                imageUrl: defaultImageUrl, // 게시글 이미지 URL
+                                link: {
+                                    mobileWebUrl: 'http://localhost:8091/page/[[${board.boardNo}]]', // 모바일 웹 URL
+                                    webUrl: 'http://localhost:8091/page/[[${board.boardNo}]]' // 웹 URL
+                                }
+                            },
+                            buttons: [
+                                {
+                                    title: '웹에서 보기',
+                                    link: {
+                                        mobileWebUrl: 'http://localhost:8091/page/[[${board.boardNo}]]', // 모바일 웹 URL
+                                        webUrl: 'http://localhost:8091/page/[[${board.boardNo}]]' // 웹 URL
+                                    }
+                                }
+                            ]
+                        });
+                    }
+                </script>
                 <!--이전글/다음글-->
                 <div class="next-previous-container">
                     <div class="previous-board" th:each="nextPrevious:${nextPrevious}">
@@ -110,70 +148,235 @@
                         </div>
                     </div>
                 </div>
-                <button class="btn btn-outline-primary" type="button" onclick="moveToBoardList()">글목록</button>
-                <button class="btn btn-outline-primary" type="button" onclick="moveToUpdateBoardPage()">글수정</button>
+                <button class="btn btn-outline-primary" onclick="moveToBoardList()" type="button">글목록</button>
+                <button class="btn btn-outline-primary" onclick="moveToUpdateBoardPage()" type="button">글수정</button>
             </div>
         </div>
         <!-- 댓글 리스트 -->
         <div class="card-footer">
             <h6>댓글</h6>
-            <div>
-                <div class="mb-2">
-                    <span class="fw-bold">작성자 이름</span>
-                    <span class="text-muted">2024-09-26 19:24:40</span>
-                    <p>댓글 내용</p>
-                </div>
-            </div>
+            <div id="replyContainer"></div>
         </div>
         <!-- 댓글 입력 폼 -->
         <div class="mt-4">
             <form>
                 <div class="mb-3">
-                    <label for="nickname" class="form-label">닉네임</label>
-                    <input type="text" class="form-control" id="nickname" name="nickname" placeholder="닉네임을 입력하세요" required>
+                    <label class="form-label" for="replyAuthor">닉네임</label>
+                    <input class="form-control" id="replyAuthor" name="replyAuthor" placeholder="닉네임을 입력하세요" required
+                           type="text">
                 </div>
                 <div class="mb-3">
-                    <label for="commentContent" class="form-label">댓글 내용</label>
-                    <textarea class="form-control" id="commentContent" name="content" rows="3" placeholder="댓글을 입력하세요" required></textarea>
+                    <label class="form-label" for="commentContent">댓글 내용</label>
+                    <textarea class="form-control" id="commentContent" name="replyContents" placeholder="댓글을 입력하세요"
+                              required rows="3"></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">댓글 작성</button>
+                <button class="btn btn-primary" onclick="insertReply()" type="button">댓글 작성</button>
             </form>
         </div>
     </div>
+    <script th:src="@{/js/board/boardDetail.js}"></script>
     <script>
-        //카카오 톡 공유기능
-        Kakao.init(`[[${kakaoApiKey}]]`);
+        $(document).ready(
+            replyList()
+        );
 
-        function shareMessage() {
-            console.log(Kakao.isInitialized());
-            const defaultImageUrl = 'https://example.com/default-image.jpg';
+        // 댓글 목록 불러오기
+        function replyList() {
+            let boardNo = document.getElementById('boardNo').value;
 
-            Kakao.Share.sendDefault({
-                objectType: 'feed',
-                content: {
-                    title: '[[${board.boardTitle}]]', // 여기서 게시글 제목을 넣어주세요
-                    description: '[[${board.boardContent}]]', // 게시글 설명을 넣어주세요
-                    imageUrl: defaultImageUrl, // 게시글 이미지 URL
-                    link: {
-                        mobileWebUrl: 'http://localhost:8091/page/${board.boardNo}', // 모바일 웹 URL
-                        webUrl: 'http://localhost:8091/page/${board.boardNo}' // 웹 URL
-                    }
-                },
-                buttons: [
-                    {
-                        title: '웹에서 보기',
-                        link: {
-                            mobileWebUrl: 'http://localhost:8091/page/${board.boardNo}',
-                            webUrl: 'http://localhost:8091/page/${board.boardNo}'
+            $.ajax({
+                url: '/api/reply/' + boardNo,
+                type: 'GET',
+                dataType: 'json',
+                contentType: 'application/json; charset=utf-8'
+            }).done(function (resp) {
+                const replyContainer = document.getElementById('replyContainer');
+                replyContainer.innerHTML = ''; // 기존 댓글 초기화
+
+                if (resp.length > 0) {
+                    resp.forEach(reply => {
+                        const replyElement = document.createElement('div');
+                        replyElement.className = 'mb-2';
+                        replyElement.innerHTML = `
+                        <span class="fw-bold">${reply.replyAuthor}</span> // 대댓글 작성자 이름
+                        <span class="text-muted">${reply.replyCreatedTime}</span>
+                        <p>${reply.replyContents}</p>
+                            <button class="btn btn-link" onclick="showReplyForm(${reply.replyNo})">답글</button>
+                            <button class="btn btn-link" onclick="showUpdateForm(${reply.replyNo}, '${reply.replyContents}')">수정</button>
+                            <button class="btn btn-danger" onclick="replyDelete(${reply.replyNo})">삭제</button>
+                        <div id="replyForm_${reply.replyNo}" style="display:none">
+                            <input type="text" id="replyAuthor_${reply.replyNo}" class="form-control mb-1" placeholder="작성자 이름을 입력하세요">
+                            <input type="text" id="replyContent_${reply.replyNo}" class="form-control mb-1" placeholder="답글 입력">
+                        </div>`;
+
+                        // 대댓글이 있는 경우
+                        if (reply.childReplies && reply.childReplies.length > 0) {
+
+                            const subReplyContainer = document.createElement('div');
+
+                            subReplyContainer.className = 'ml-4'; // 대댓글 들여쓰기
+
+                            reply.childReplies.forEach(subReply => {
+                                const subReplyElement = document.createElement('div');
+                                subReplyElement.className = 'mb-2';
+                                subReplyElement.innerHTML = `
+                                <span class="fw-bold">${subReply.replyAuthor}</span>
+                                <span class="text-muted">${subReply.replyCreatedTime}</span>
+                                <p>${subReply.replyContents}</p>
+                                    <button class="btn btn-link" onclick="showUpdateForm(${subReply.replyNo}, '${subReply.replyContents}')">수정</button>
+                                    <button class="btn btn-danger" onclick="replyDelete(${subReply.replyNo})">삭제</button>
+                                <div id="replyForm_${subReply.replyNo}" style="display:none">
+                                <input type="text" id="replyContent_${subReply.replyNo}" class="form-control mb-1" placeholder="댓글을 수정하세요">
+                                </div>`;
+                                subReplyContainer.appendChild(subReplyElement);
+                            });
+                            replyElement.appendChild(subReplyContainer);
                         }
-                    }
-                ]
+                        replyContainer.appendChild(replyElement);
+                    });
+                } else {
+                    replyContainer.innerHTML = '<p>댓글이 없습니다.</p>';
+                }
+            }).fail(function (error) {
+                console.log(error);
             });
         }
-    </script>
-    <script type="text/javascript" th:src="@{/js/reply/boardReply.js}"></script>
-    <script type="text/javascript" th:src="@{/js/board/boardDetail.js}">
 
+        // 댓글 작성
+        function insertReply(parentReplyNo = null) {
+            let boardNo = document.getElementById('boardNo').value;
+            let author = document.getElementById('replyAuthor').value;
+            let contents = parentReplyNo ? document.getElementById('replyContent_' + parentReplyNo).value : document.getElementById('commentContent').value;
+            let userNo = document.getElementById('userNo').value;
+
+            const data = {
+                replyAuthor: author,
+                replyContents: contents,
+                userNo: userNo,
+                boardNo2: boardNo,
+                parentReplyNo: parentReplyNo // 대댓글이면 부모 댓글 번호 전달
+            };
+
+            $.ajax({
+                url: '/api/reply/' + boardNo,
+                type: 'POST',
+                data: JSON.stringify(data),
+                dataType: 'json',
+                contentType: 'application/json; charset=utf-8'
+            }).done(function (resp) {
+                alert('댓글이 작성되었습니다.');
+                replyList();
+                document.getElementById('replyAuthor').value = '';
+                document.getElementById('commentContent').value = '';
+            }).fail(function (error) {
+                console.log(error);
+                alert('댓글 작성에 실패했습니다.');
+            });
+        }
+
+        // 댓글 삭제
+        function replyDelete(replyNo) {
+            $.ajax({
+                url: '/api/reply/' + replyNo,
+                type: 'DELETE'
+            }).done(function (resp) {
+                alert('댓글이 삭제되었습니다.');
+                replyList();
+            }).fail(function (error) {
+                console.log(error);
+                alert('댓글 삭제에 실패했습니다.');
+            });
+        }
+
+        // 댓글 수정 폼 표시
+        function showUpdateForm(replyNo, currentContent) {
+            const replyElement = document.getElementById('replyForm_' + replyNo);
+
+            if (!replyElement) {
+                console.error('해당하는 replyForm이 존재하지 않습니다. replyNo:', replyNo);
+                return; // replyElement가 없을 경우 함수 종료
+            }
+            // 폼 토글 기능 추가 (이전에 열렸던 폼을 다시 누르면 사라지게 설정)
+            if (replyElement.style.display === 'block') {
+                replyElement.style.display = 'none'; // 폼이 이미 열려있으면 닫기
+                return; // 폼을 닫고 함수 종료
+            } else {
+                replyElement.style.display = 'block'; // 폼 열기
+
+            }
+
+            document.getElementById('replyContent_' + replyNo).value = currentContent; // 기존 댓글 내용을 수정란에 표시
+
+            // 답글 등록 버튼 숨기기
+            const replyBtn = document.querySelector(`#replyForm_${replyNo} .reply-btn`);
+            if (replyBtn) replyBtn.style.display = 'none';
+
+            // 수정 버튼 추가 (이미 추가된 경우 중복 추가 방지)
+            let updateBtn = document.getElementById('updateBtn_' + replyNo);
+
+            if (!updateBtn) {
+                updateBtn = document.createElement('button');
+                updateBtn.id = 'updateBtn_' + replyNo;
+                updateBtn.className = 'btn btn-primary btn-sm mt-1';
+                updateBtn.innerText = '댓글 수정';
+                updateBtn.onclick = function () {
+                    updateReply(replyNo); // 수정 버튼 클릭 시 updateReply 호출
+                };
+                // 수정 폼에 수정 버튼 추가
+                replyElement.appendChild(updateBtn);
+            }
+            updateBtn.style.display = 'block'; // 수정 버튼 보이기
+        }
+
+        // 댓글 수정
+        function updateReply(replyNo) {
+            let updatedContent = document.getElementById('replyContent_' + replyNo).value;
+
+            const data = {
+                replyContents: updatedContent
+            };
+
+            $.ajax({
+                url: '/api/reply/' + replyNo,
+                type: 'PUT',
+                data: JSON.stringify(data),
+                dataType: 'json',
+                contentType: 'application/json; charset=utf-8'
+            }).done(function (resp) {
+                alert('댓글이 수정되었습니다.');
+                replyList(); // 댓글 목록 갱신
+            }).fail(function (error) {
+                console.log(error);
+                alert('댓글 수정에 실패했습니다.');
+            });
+        }
+
+        // 답글 작성 폼 표시
+        function showReplyForm(replyNo) {
+            const replyForm = document.getElementById('replyForm_' + replyNo);
+            replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none'; // 폼 토글
+
+            // 답글 버튼을 눌렀을 때는 수정 버튼을 숨기고 답글 등록 버튼만 보이게 설정
+            const updateBtn = document.getElementById('updateBtn_' + replyNo);
+            if (updateBtn) updateBtn.style.display = 'none'; // 수정 버튼 숨기기
+
+            // 내용 입력창을 빈 값으로 초기화
+            document.getElementById('replyAuthor_' + replyNo).value = ''; // 작성자 입력창은 시큐리티 아이디를 넣기.
+            document.getElementById('replyContent_' + replyNo).value = ''; // 내용 입력창 비우기
+
+            //답글 등록 버튼 처리
+            const replyBtn = document.querySelector(`#replyForm_${replyNo} .reply-btn`);
+            if (!replyBtn) {
+                const newReplyBtn = document.createElement('button');
+                newReplyBtn.className = 'btn btn-primary btn-sm mt-1 reply-btn';
+                newReplyBtn.innerText = '답글 등록';
+                newReplyBtn.onclick = function () {
+                    insertReply(replyNo); // 답글 등록 버튼 클릭 시 insertReply 호출
+                };
+                replyForm.appendChild(newReplyBtn);
+            }
+            replyBtn.style.display = 'block'; // 답글 등록 버튼 보이기
+        }
     </script>
 </th:block>
 </body>

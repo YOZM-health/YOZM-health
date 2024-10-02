@@ -11,6 +11,8 @@ public interface BoardReplyMapper {
     //대댓글 목록
     List<BoardReplyDto.Response> findAllByParentReply(Long parentReplyNo);
 
+    BoardReplyDto.Response findByReplyId(Long replyNo);
+
     Long insertReply (BoardReplyDto.Request dto);
 
     Long updateReply (BoardReplyDto.Request dto);
