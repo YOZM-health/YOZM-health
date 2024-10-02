@@ -6,15 +6,17 @@ import com.example.yozmhealth.board.vo.dto.BoardDto;
 import com.example.yozmhealth.config.Upload.FileUtils;
 import com.example.yozmhealth.config.page.Criteria;
 import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Log4j2
 @Service
 @Transactional
 @AllArgsConstructor
@@ -25,7 +27,8 @@ public class BoardService {
     private final FileUtils fileUtils;
 
     private final BoardAttachService boardAttachService;
-
+    
+    //게시글 조회
     @Transactional(readOnly = true)
     public List<BoardDto.BoardResponse> findAll (Criteria criteria) {
         return Optional
@@ -33,7 +36,8 @@ public class BoardService {
                 .filter(boardResponseList -> !boardResponseList.isEmpty())
                 .orElseThrow(() -> new RuntimeException("게시글 목록이 없습니다."));
     }
-
+    
+    //게시글 단일 조회
     @Transactional(readOnly = true)
     public BoardDto.BoardResponse findByBoardId (Long boardId) {
         return boardMapper.findByBoardId(boardId)
@@ -59,9 +63,9 @@ public class BoardService {
         return createResult;
     }
 
-    //리팩토링
+    //게시글 수정
     public Long updateBoard(BoardDto.BoardRequest request) throws IOException {
-        List<BoardAttachDto.Response> list = new ArrayList<>();
+        List<BoardAttachDto.Response> list;
         Long updateResult = boardMapper.updateBoard(request);
         //첨부파일이 없는 경우 게시글 수정기능
         if(request.getAttachLists().isEmpty()||request.getAttachLists() == null){
@@ -73,15 +77,6 @@ public class BoardService {
         //파일이 있는 경우
         if(!list.isEmpty()) {
             //저장된 이미지 삭제
-            /*for(BoardAttachDto.Response response : list){
-                String filePath = response.getFilePath();
-                File file = new File(filePath);
-                if(file.exists()) {
-                    file.delete();
-                }
-                //디비에서 삭제
-                boardAttachService.deleteAttach(request.getBoardNo());
-            }*/
             for(int i=0; i< list.size(); i++) {
                 String filePath = list.get(i).getFilePath();
                 File file = new File(filePath);
@@ -103,7 +98,8 @@ public class BoardService {
         }
         return updateResult;
     }
-    //리팩토링
+    
+    //게시글 삭제(삭제 표시만 바꾸기 -> 첨부 파일 부분도 바꾸기.)
     public void deleteBoard(Long boardNo) {
         //게시글 삭제
         boardMapper.deleteBoard(boardNo);
@@ -121,6 +117,23 @@ public class BoardService {
                 //디비에 있는 첨부파일 삭제
                 boardAttachService.deleteAttach(boardNo);
             }
+        }
+    }
+
+    //게시글 일괄삭제
+    public void deleteBoardBatch(List<Long>boardNos){
+        boardMapper.deleteBoardBatch(boardNos);
+    }
+
+    //삭제할 게시글이 3개월이 지나면 삭제
+    @Scheduled(cron = "0 0 0 1 * ?")// 매달 1일 자정에 실행
+    public void deleteExpiredBoards(){
+        // 삭제할 게시글 번호를 가져오는 메소드
+        List<Long> expiredBoardNos = boardMapper.findExpiredBoardNos();
+
+        if (!expiredBoardNos.isEmpty()) {
+            deleteBoardBatch(expiredBoardNos); // 기존의 deleteBoardBatch 호출
+            log.info("만료된 게시글 삭제 완료: {}", expiredBoardNos);
         }
     }
 
