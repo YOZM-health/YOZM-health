@@ -1,6 +1,5 @@
 package com.example.yozmhealth.board.service;
 
-import com.example.yozmhealth.board.mapper.BoardAttachMapper;
 import com.example.yozmhealth.board.mapper.BoardMapper;
 import com.example.yozmhealth.board.vo.dto.BoardAttachDto;
 import com.example.yozmhealth.board.vo.dto.BoardDto;
@@ -12,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,7 +24,7 @@ public class BoardService {
 
     private final FileUtils fileUtils;
 
-    private final BoardAttachMapper boardAttachMapper;
+    private final BoardAttachService boardAttachService;
 
     @Transactional(readOnly = true)
     public List<BoardDto.BoardResponse> findAll (Criteria criteria) {
@@ -36,19 +36,24 @@ public class BoardService {
 
     @Transactional(readOnly = true)
     public BoardDto.BoardResponse findByBoardId (Long boardId) {
-        return boardMapper.findByBoardId(boardId).get();
+        return boardMapper.findByBoardId(boardId)
+                .orElseThrow(()-> new RuntimeException("게시글이 존재하지 않습니다."));
     }
 
-    //리팩토링
+    //게시글 작성
     public Long insertBoard(BoardDto.BoardRequest request) throws IOException {
         Long createResult = boardMapper.insertBoard(request);
+        //첨부 파일이 없는 경우
+        if(request.getAttachLists().isEmpty()||request.getAttachLists() == null){
+            return createResult;
+        }
         //첨부파일이 있는 경우
         List<BoardAttachDto.Response> list = fileUtils.fileParse(request.getAttachLists());
 
         if(list != null) {
             for(BoardAttachDto.Response dto : list) {
                 dto.setBoardNo2(request.getBoardNo());
-                boardAttachMapper.insertAttach(dto);
+                boardAttachService.insertAttach(dto);
             }
         }
         return createResult;
@@ -56,12 +61,27 @@ public class BoardService {
 
     //리팩토링
     public Long updateBoard(BoardDto.BoardRequest request) throws IOException {
+        List<BoardAttachDto.Response> list = new ArrayList<>();
         Long updateResult = boardMapper.updateBoard(request);
-        List<BoardAttachDto.Response> list = boardAttachMapper.attachByBoardList(request.getBoardNo());
+        //첨부파일이 없는 경우 게시글 수정기능
+        if(request.getAttachLists().isEmpty()||request.getAttachLists() == null){
+            return updateResult;
+        }
+        //첨부 파일 목록
+        list = boardAttachService.attachList(request.getBoardNo());
         
         //파일이 있는 경우
         if(!list.isEmpty()) {
-            //저장위치 삭제
+            //저장된 이미지 삭제
+            /*for(BoardAttachDto.Response response : list){
+                String filePath = response.getFilePath();
+                File file = new File(filePath);
+                if(file.exists()) {
+                    file.delete();
+                }
+                //디비에서 삭제
+                boardAttachService.deleteAttach(request.getBoardNo());
+            }*/
             for(int i=0; i< list.size(); i++) {
                 String filePath = list.get(i).getFilePath();
                 File file = new File(filePath);
@@ -69,14 +89,16 @@ public class BoardService {
                     file.delete();
                 }
                 //디비에서 삭제
-                boardAttachMapper.deleteAttach(request.getBoardNo());
+                boardAttachService.deleteAttach(request.getBoardNo());
             }
+        }
+        if(!request.getAttachLists().isEmpty() && request.getAttachLists() != null) {
             //파일  업로드
             list = fileUtils.fileParse(request.getAttachLists());
             //파일 디비 저장
             for(BoardAttachDto.Response dto : list) {
                 dto.setBoardNo2(request.getBoardNo());
-                boardAttachMapper.insertAttach(dto);
+                boardAttachService.insertAttach(dto);
             }
         }
         return updateResult;
@@ -86,7 +108,7 @@ public class BoardService {
         //게시글 삭제
         boardMapper.deleteBoard(boardNo);
         //첨부파일목록
-        List<BoardAttachDto.Response> attachList = boardAttachMapper.attachByBoardList(boardNo);
+        List<BoardAttachDto.Response> attachList = boardAttachService.attachList(boardNo);
 
         if(!attachList.isEmpty()) {
             for (int i = 0; i< attachList.size(); i++) {
@@ -97,7 +119,7 @@ public class BoardService {
                     file.delete();
                 }
                 //디비에 있는 첨부파일 삭제
-                boardAttachMapper.deleteAttach(boardNo);
+                boardAttachService.deleteAttach(boardNo);
             }
         }
     }

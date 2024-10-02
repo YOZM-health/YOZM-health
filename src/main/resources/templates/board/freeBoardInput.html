@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="kr"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/mainLayout}">
+<head>
+    <meta charset="UTF-8">
+    <title>자유 게시글 작성</title>
+</head>
+<body>
+<th:block layout:fragment="contents">
+    <div class="container container-with-scroll mt-5">
+        <!-- 카테고리 -->
+        <div class="mb-4">
+            <h2>인기 카테고리</h2>
+            <div class="d-flex flex-wrap gap-2">
+                <button th:each="category : ${category}"
+                        th:text="${'#' + category.catName + ' (' + category.postCount + ')'}"
+                        th:onclick="'location.href=\'/category/' + ${category.getCatCode()} + '\''"
+                        class="btn btn-outline-secondary category-btn">
+                </button>
+            </div>
+        </div>
+        <!-- 카테고리 -->
+        <div class="mb-3 row">
+            <label for="category" class="col-sm-2 col-form-label">카테고리</label>
+            <div class="col-sm-10">
+                <select class="form-select" id="category" name="category">
+                    <option>선택</option>
+                    <th:block th:each="categoryDto : ${category}">
+                        <option th:value="${categoryDto.catCode}" th:text="${categoryDto.catName}"></option>
+                    </th:block>
+                </select>
+            </div>
+        </div>
+        <!-- 게시글 작성 폼 -->
+        <form method="post" id="boardWriteForm" enctype="multipart/form-data">
+            <!--회원 번호(해당 번호는 시큐리티인증 객체를 완성을 하고 추가적으로 수정-->
+            <input type="hidden" name="userNo" id="userNo" th:value="1">
+            <!-- 제목 -->
+            <div class="mb-3 row">
+                <label for="title" class="col-sm-2 col-form-label">제목</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="title" name="title" placeholder="제목을 입력하세요">
+                </div>
+            </div>
+
+            <!-- 닉네임 -->
+            <div class="mb-3 row">
+                <label for="nickname" class="col-sm-2 col-form-label">닉네임</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="nickname" name="nickname" placeholder="닉네임을 입력하세요">
+                </div>
+            </div>
+
+            <!-- 내용 (summer note 적용하기.)-->
+            <div class="mb-3 row">
+                <label for="content" class="col-sm-2 col-form-label">내용</label>
+                <div class="col-sm-10">
+                    <textarea class="form-control" id="content" name="content" rows="10" placeholder="내용을 입력하세요"></textarea>
+                </div>
+            </div>
+            <script th:src="@{/js/board/summerNoteEditor.js}"></script>
+            <!-- 첨부파일 -->
+            <div class="mb-3 row">
+                <label class="col-sm-2 col-form-label">첨부파일</label>
+                <div class="col-sm-10">
+                    <input type="file" class="form-control file-input" name="files" id="file1" multiple>
+                    <input type="file" class="form-control file-input" name="files" id="file2" multiple>
+                    <input type="file" class="form-control file-input" name="files" id="file3" multiple>
+                    <input type="file" class="form-control file-input" name="files" id="file4" multiple>
+                    <input type="file" class="form-control file-input" name="files" id="file5" multiple>
+                    <small class="form-text text-muted">png, gif, jpg, jpeg 파일만 업로드가 가능합니다.</small>
+                </div>
+            </div>
+
+            <!-- 버튼 -->
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn btn-secondary me-2" onclick="moveToBoardList()">취소</button>
+                <button type="button" class="btn btn-secondary me-2" onclick="tmpBoardProc()">임시글 작성</button>
+                <button type="button" class="btn btn-primary" onclick="boardProc()">글쓰기</button>
+            </div>
+        </form>
+    </div>
+    <script th:src="@{/js/board/boardInput.js}"></script>
+</th:block>
+</body>
+</html>
