@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class BoardReplyDto {
@@ -16,12 +17,12 @@ public class BoardReplyDto {
     @AllArgsConstructor
     public static class Request {
         private Long replyNo;
-        private Long boardNo2;
-        private Long userNo;
+        private Long boardNo2; // 게시글 번호
+        private Long userNo; //회원 번호
         private String replyAuthor;
         @NotBlank(message = "댓글 내용을 작성해주세요.")
         private String replyContents;
-        private Long parentReplyNo;
+        private Long parentReplyNo; // 대댓글 번호
     }
 
     @Getter
@@ -41,6 +42,6 @@ public class BoardReplyDto {
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
         private LocalDateTime replyUpdatedTime;
         //대댓글목록
-        List<Response> childReplies;
+        List<Response> childReplies = new ArrayList<>();
     }
 }

@@ -14,13 +14,18 @@
         <!-- 카테고리 -->
         <div class="mb-4">
             <h2>인기 카테고리</h2>
-            <div class="d-flex flex-wrap gap-2">
-                <button th:each="category : ${category}"
-                        th:text="${'#' + category.catName + ' (' + category.postCount + ')'}"
-                        th:onclick="'location.href=\'/category/' + ${category.getCatCode()} + '\''"
-                        class="btn btn-outline-secondary category-btn">
-                </button>
-            </div>
+            <th:block th:unless="${#lists.isEmpty(category)}">
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-outline-primary"
+                            th:each="category : ${category}"
+                            th:onclick="'location.href=\'/category/' + ${category.getCatCode()} + '\''"
+                            th:text="${'#' + category.catName + ' (' + category.postCount + ')'}">
+                    </button>
+                </div>
+            </th:block>
+            <th:block th:if="${#lists.isEmpty(category)}">
+                카테고리가 없습니다.
+            </th:block>
         </div>
         <!-- 카테고리 -->
         <div class="mb-3 row">
