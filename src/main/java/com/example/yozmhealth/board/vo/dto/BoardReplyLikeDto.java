@@ -22,5 +22,12 @@ public class BoardReplyLikeDto {
     public static class Response {
         private Long replyNo2;
         private Long userNo2;
+        private Long likeCount;
+        private boolean isLiked;//좋아요 상태
+
+        public Response(boolean isLiked, Long likeCount){
+            this.isLiked = isLiked;
+            this.likeCount = likeCount;
+        }
     }
 }

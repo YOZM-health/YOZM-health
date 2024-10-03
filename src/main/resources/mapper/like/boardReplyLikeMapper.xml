@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.yozmhealth.board.mapper.BoardReplyLikeMapper">
+
     <select id="boardLikeCount" parameterType="Long">
         select count(*) from reply_like r where r.REPLY_NO2 = #{replyNo2}
+    </select>
+    <select id="boardReplyLikeDuplicate" parameterType="Long" resultType="Long">
+        select * from reply_like r where r.REPLY_NO2 = #{replyNo2} and r.USER_NO2 = #{userNo2}
     </select>
     <insert id="boardLikePlus">
         insert into reply_like(USER_NO2, REPLY_NO2) VALUES (#{userNo2},#{replyNo2})
