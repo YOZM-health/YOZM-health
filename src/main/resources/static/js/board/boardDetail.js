@@ -15,3 +15,7 @@ function moveToUpdateBoardPage() {
     const boardNo = document.getElementById("boardNo").value;
     location.href='/page/edite/'+boardNo;
 }
+
+function moveToBoardList() {
+    location.href='/page/list'
+}
