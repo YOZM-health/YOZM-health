@@ -13,6 +13,10 @@
             board b
         on
             b.BOARD_CODE = c.CAT_CODE
+        and
+            b.BOARD_STATUS != 'P'
+        and
+            b.BOARD_DEL_FL != 'Y'
         WHERE
             c.CAT_NAME NOT IN ('자유', '공지')
         group by
