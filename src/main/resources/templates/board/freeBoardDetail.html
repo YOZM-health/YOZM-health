@@ -52,7 +52,7 @@
                 <div class="d-flex flex-wrap gap-2">
                     <button class="btn btn-outline-primary"
                             th:each="category : ${category}"
-                            th:onclick="'location.href=\'/category/' + ${category.getCatCode()} + '\''"
+                            th:onclick="'location.href=\'/page/list?boardCode=' + ${category.getCatCode()} + '\''"
                             th:text="${'#' + category.catName + ' (' + category.postCount + ')'}">
                     </button>
                 </div>
