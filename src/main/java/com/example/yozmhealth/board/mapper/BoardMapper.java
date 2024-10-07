@@ -21,6 +21,10 @@ public interface BoardMapper {
 
     void deleteBoard(Long boardNo);
 
+    void deleteBoardBatch(List<Long>boardNos);
+
+    List<Long>findExpiredBoardNos();
+
     void readCountUp(Long boardNo);
 
     List<BoardDto.BoardResponse> boardNextPrevious (Long boardNo);

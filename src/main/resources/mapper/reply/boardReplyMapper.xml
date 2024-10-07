@@ -5,18 +5,21 @@
     <select id="findAllByBoard" parameterType="Long">
         select * from reply r where r.BOARD_NO2 = #{boardNo} and r.PARENT_REPLY_NO is null;
     </select>
-    <!--대댓글을 부모 댓글에 대해 조회-->
-    <select id="parentReply" parameterType="Long">
+    <!--대댓글을 부모 댓글로 조회-->
+    <select id="findAllByParentReply" parameterType="Long">
         select * from reply r where r.PARENT_REPLY_NO = #{parentReplyNo}
+    </select>
+    <select id="findByReplyId" parameterType="Long" resultType="com.example.yozmhealth.board.vo.dto.BoardReplyDto$Response">
+        select * from reply r where r.REPLY_NO = #{replyNo}
     </select>
     <insert id="insertReply" parameterType="com.example.yozmhealth.board.vo.dto.BoardReplyDto$Request">
         insert into reply(BOARD_NO2, REPLY_AUTHOR, REPLY_CONTENTS, PARENT_REPLY_NO, USER_NO, REPLY_CREATED_TIME, REPLY_UPDATED_TIME)
         VALUES (#{boardNo2},#{replyAuthor},#{replyContents},#{parentReplyNo},#{userNo},now(),now())
     </insert>
     <update id="updateReply" parameterType="com.example.yozmhealth.board.vo.dto.BoardReplyDto$Request">
-        update reply r set r.REPLY_CONTENTS = #{replyContents} where r.REPLY_NO =
+        update reply r set r.REPLY_CONTENTS = #{replyContents} where r.REPLY_NO = #{replyNo}
     </update>
     <delete id="deleteReply" parameterType="Long">
-        delete from reply r where r.REPLY_NO = #{replyNo}
+        delete from reply r where r.REPLY_NO = #{replyNo} or r.PARENT_REPLY_NO = #{replyNo}
     </delete>
 </mapper>

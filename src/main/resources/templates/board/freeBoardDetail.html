@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="kr"
+      layout:decorate="~{layout/mainLayout}"
       xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/mainLayout}">
+      xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>게시글 조회</title>
@@ -25,14 +25,17 @@
             border: 1px solid black; /* 포커스 시 테두리 색상 유지 */
             outline: none; /* 포커스 아웃라인 제거 */
         }
+
         .next-previous-container {
             display: flex;
             justify-content: space-between; /* 양쪽 끝에 배치 */
             padding: 10px 0; /* 상하 여백 */
         }
+
         .previous-board {
             flex: 0 1 auto; /* 이전글은 필요한 공간만 차지 */
         }
+
         .next-board {
             flex: 0 1 auto; /* 다음글도 필요한 공간만 차지 */
             margin-left: auto; /* 자동 여백을 사용하여 오른쪽으로 밀기 */
@@ -45,29 +48,35 @@
         <!-- 카테고리 -->
         <div class="mb-4">
             <h2>인기 카테고리</h2>
-            <div class="d-flex flex-wrap gap-2">
-                <button th:each="category : ${category}"
-                        th:text="${'#' + category.catName + ' (' + category.postCount + ')'}"
-                        th:onclick="'location.href=\'/category/' + ${category.getCatCode()} + '\''"
-                        class="btn btn-outline-primary">
-                </button>
-            </div>
+            <th:block th:unless="${#lists.isEmpty(category)}">
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-outline-primary"
+                            th:each="category : ${category}"
+                            th:onclick="'location.href=\'/page/list?boardCode=' + ${category.getCatCode()} + '\''"
+                            th:text="${'#' + category.catName + ' (' + category.postCount + ')'}">
+                    </button>
+                </div>
+            </th:block>
+            <th:block th:if="${#lists.isEmpty(category)}">
+                카테고리가 없습니다.
+            </th:block>
         </div>
         <!--게시글내용-->
         <div class="card">
             <div class="card-header">
-                <input type="hidden" id="boardNo" th:value="${board.boardNo}">
+                <input id="userNo" th:value="${board.userNo}" type="hidden">
+                <input id="boardNo" th:value="${board.boardNo}" type="hidden">
                 <h5 th:text="${board.boardTitle}"/>
-                <small th:text="${#temporals.format(board.createDate, 'yyyy-MM-dd HH:mm')}"/>
+                <span class="badge bg-primary">[[${board.boardAuthor}]]</span>
+                <small style="float: right;" th:text="${#temporals.format(board.createDate, 'yyyy-MM-dd HH:mm')}"/>
             </div>
             <div class="card-body">
-                <p th:text="${board.boardContent}"></p>
+                <p th:utext="${board.boardContent}"></p>
                 <div class="d-flex">
-                    <span class="badge bg-primary">[[${board.boardAuthor}]]</span>
                     <span class="ms-auto">조회수: <span th:utext="${board.readCount}"></span></span>
                 </div>
                 <div class="my-3">
-                    <th:block th:unless="${#lists.isEmpty(attachList)}" th:each="fileList:${attachList}">
+                    <th:block th:each="fileList:${attachList}" th:unless="${#lists.isEmpty(attachList)}">
                         <a th:href="@{|/api/download/${fileList.getOriginName()}|}">
                             <span th:text="${fileList.getOriginName()}"></span>
                         </a>
@@ -91,6 +100,35 @@
                         </a>
                     </div>
                 </div>
+                <script>
+                    Kakao.init(`[[${kakaoApiKey}]]`);
+
+                    function shareMessage() {
+                        console.log(Kakao.isInitialized());
+                        const defaultImageUrl = 'https://example.com/default-image.jpg';
+                        Kakao.Share.sendDefault({
+                            objectType: 'feed',
+                            content: {
+                                title: '[[${board.boardTitle}]]', // 여기서 게시글 제목을 넣어주세요
+                                description: '[[${board.boardContent}]]', // 게시글 설명을 넣어주세요
+                                imageUrl: defaultImageUrl, // 게시글 이미지 URL
+                                link: {
+                                    mobileWebUrl: 'http://localhost:8091/page/[[${board.boardNo}]]', // 모바일 웹 URL
+                                    webUrl: 'http://localhost:8091/page/[[${board.boardNo}]]' // 웹 URL
+                                }
+                            },
+                            buttons: [
+                                {
+                                    title: '웹에서 보기',
+                                    link: {
+                                        mobileWebUrl: 'http://localhost:8091/page/[[${board.boardNo}]]', // 모바일 웹 URL
+                                        webUrl: 'http://localhost:8091/page/[[${board.boardNo}]]' // 웹 URL
+                                    }
+                                }
+                            ]
+                        });
+                    }
+                </script>
                 <!--이전글/다음글-->
                 <div class="next-previous-container">
                     <div class="previous-board" th:each="nextPrevious:${nextPrevious}">
@@ -110,71 +148,34 @@
                         </div>
                     </div>
                 </div>
-                <button class="btn btn-outline-primary" type="button" onclick="moveToBoardList()">글목록</button>
-                <button class="btn btn-outline-primary" type="button" onclick="moveToUpdateBoardPage()">글수정</button>
+                <button class="btn btn-outline-primary" onclick="moveToBoardList()" type="button">글목록</button>
+                <button class="btn btn-outline-primary" onclick="moveToUpdateBoardPage()" type="button">글수정</button>
             </div>
         </div>
         <!-- 댓글 리스트 -->
         <div class="card-footer">
             <h6>댓글</h6>
-            <div>
-                <div class="mb-2">
-                    <span class="fw-bold">작성자 이름</span>
-                    <span class="text-muted">2024-09-26 19:24:40</span>
-                    <p>댓글 내용</p>
-                </div>
-            </div>
+            <div id="replyContainer"></div>
         </div>
         <!-- 댓글 입력 폼 -->
         <div class="mt-4">
             <form>
                 <div class="mb-3">
-                    <label for="nickname" class="form-label">닉네임</label>
-                    <input type="text" class="form-control" id="nickname" name="nickname" placeholder="닉네임을 입력하세요" required>
+                    <label class="form-label" for="replyAuthor">닉네임</label>
+                    <input class="form-control" id="replyAuthor" name="replyAuthor" placeholder="닉네임을 입력하세요" required
+                           type="text">
                 </div>
                 <div class="mb-3">
-                    <label for="commentContent" class="form-label">댓글 내용</label>
-                    <textarea class="form-control" id="commentContent" name="content" rows="3" placeholder="댓글을 입력하세요" required></textarea>
+                    <label class="form-label" for="commentContent">댓글 내용</label>
+                    <textarea class="form-control" id="commentContent" name="replyContents" placeholder="댓글을 입력하세요"
+                              required rows="3"></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">댓글 작성</button>
+                <button class="btn btn-primary" onclick="insertReply()" type="button">댓글 작성</button>
             </form>
         </div>
     </div>
-    <script>
-        //카카오 톡 공유기능
-        Kakao.init(`[[${kakaoApiKey}]]`);
-
-        function shareMessage() {
-            console.log(Kakao.isInitialized());
-            const defaultImageUrl = 'https://example.com/default-image.jpg';
-
-            Kakao.Share.sendDefault({
-                objectType: 'feed',
-                content: {
-                    title: '[[${board.boardTitle}]]', // 여기서 게시글 제목을 넣어주세요
-                    description: '[[${board.boardContent}]]', // 게시글 설명을 넣어주세요
-                    imageUrl: defaultImageUrl, // 게시글 이미지 URL
-                    link: {
-                        mobileWebUrl: 'http://localhost:8091/page/${board.boardNo}', // 모바일 웹 URL
-                        webUrl: 'http://localhost:8091/page/${board.boardNo}' // 웹 URL
-                    }
-                },
-                buttons: [
-                    {
-                        title: '웹에서 보기',
-                        link: {
-                            mobileWebUrl: 'http://localhost:8091/page/${board.boardNo}',
-                            webUrl: 'http://localhost:8091/page/${board.boardNo}'
-                        }
-                    }
-                ]
-            });
-        }
-    </script>
-    <script type="text/javascript" th:src="@{/js/reply/boardReply.js}"></script>
-    <script type="text/javascript" th:src="@{/js/board/boardDetail.js}">
-
-    </script>
+    <script th:src="@{/js/board/boardDetail.js}"></script>
+    <script th:src="@{/js/reply/boardReply.js}"></script>
 </th:block>
 </body>
 </html>

@@ -14,6 +14,10 @@
             b.CREATE_DATE
         FROM
             board b
+        JOIN
+            category c
+        ON
+            b.BOARD_CODE = c.CAT_CODE
         WHERE
             b.BOARD_DEL_FL = 'N' AND b.BOARD_STATUS = 'C'
         <if test="boardCode != null and boardCode != 0">
@@ -29,7 +33,7 @@
             AND b.BOARD_AUTHOR LIKE CONCAT('%', #{keyword}, '%')
         </if>
         ORDER BY
-        b.BOARD_NO DESC
+            b.BOARD_NO DESC
         LIMIT #{perPageNum} OFFSET #{pageStart}
     </select>
 
@@ -41,6 +45,7 @@
             b.board_content,
             b.board_author,
             b.read_count,
+            b.user_no,
             b.create_date
         from
             board b
@@ -54,6 +59,10 @@
             count(*)
         from
             board b
+        JOIN
+            category c
+        ON
+            b.BOARD_CODE = c.CAT_CODE
         where
             b.BOARD_STATUS = 'C' and b.BOARD_DEL_FL = 'N'
         <if test="boardCode != null and boardCode != 0">
@@ -110,10 +119,35 @@
         update
             board b
         set
-            b.BOARD_DEL_FL = 'Y'
+            b.BOARD_DEL_FL = 'Y',
+            b.BOARD_DEL_DATE = now()
         where
             b.BOARD_NO = #{boardNo}
     </update>
+
+    <!--게시글 삭제(삭제 표시가 된 게시글 일괄삭제)-->
+    <delete id="deleteBoardBatch" parameterType="Long">
+        delete from
+                   board b
+        where
+            b.BOARD_DEL_FL = 'Y'
+        and
+            b.BOARD_NO in
+        <foreach  item="boardNo" collection="boardNos" open="(" separator="," close=")">
+            #{boardNo}
+        </foreach>
+    </delete>
+
+    <!--삭제 표시가 된 게시글이 3개월이 지났는지를 확인-->
+    <select id="findExpiredBoardNos" resultType="Long">
+        <![CDATA[
+        select
+            b.BOARD_NO
+        from
+            board b
+        where b.BOARD_DEL_FL = 'Y' and b.BOARD_DEL_DATE < now() - interval 3 month
+        ]]>
+    </select>
 
     <!--게시글 조회수 증가-->
     <update id="readCountUp" parameterType="Long">

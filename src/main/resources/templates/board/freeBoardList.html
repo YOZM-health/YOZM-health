@@ -7,45 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <title>자유 게시글 목록</title>
-    <style>
-        .btn-outline-primary {
-            color: black; /* 글자색을 검정색으로 설정 */
-            border: 1px solid black; /* 테두리 색상을 검정색으로 설정 */
-            font-weight: bold; /* 글자 두께를 굵게 설정 */
-        }
-
-        .btn-outline-primary:hover {
-            color: black; /* 호버 시 글자색 유지 */
-            border: 1px solid black; /* 호버 시 테두리 색상 유지 */
-            background-color: transparent; /* 호버 시 배경색 유지 */
-        }
-
-        .btn-outline-primary:focus {
-            color: black; /* 포커스 시 글자색 유지 */
-            border: 1px solid black; /* 포커스 시 테두리 색상 유지 */
-            outline: none; /* 포커스 아웃라인 제거 */
-        }
-        .input-group {
-            display: flex; /* Flexbox 활성화 */
-            align-items: center; /* 수직 정렬 */
-        }
-
-        .search-select {
-            height: 35px;
-            width: 150px; /* 고정 너비 */
-            margin-right: 10px; /* 오른쪽 여백 */
-        }
-
-        .search-input {
-            height: 35px;
-            flex: 1; /* 남은 공간을 차지하도록 설정 */
-            margin-right: 10px; /* 오른쪽 여백 */
-        }
-
-        #button-addon3 {
-            flex-shrink: 0; /* 버튼이 축소되지 않도록 설정 */
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/board/boardList.css}">
 </head>
 <body>
 <th:block layout:fragment="contents">
@@ -54,13 +16,20 @@
                 <!-- 카테고리 -->
                 <div class="mb-4">
                     <h2>인기 카테고리</h2>
-                    <div class="d-flex flex-wrap gap-2">
-                        <button th:each="category : ${categoryList}"
-                                th:text="${'#' + category.catName + ' (' + category.postCount + ')'}"
-                                th:onclick="'location.href=\'/page/list?boardCode=' + ${category.getCatCode()} + '\''"
-                                class="btn btn-outline-primary">
-                        </button>
-                    </div>
+                    <th:block th:unless="${#lists.isEmpty(categoryList)}">
+                        <div class="d-flex flex-wrap gap-2">
+                            <button th:each="category : ${categoryList}"
+                                    th:text="${'#' + category.catName + ' (' + category.postCount + ')'}"
+                                    th:onclick="'location.href=\'/page/list?boardCode=' + ${category.getCatCode()} + '\''"
+                                    class="btn btn-outline-primary">
+                            </button>
+                        </div>
+                    </th:block>
+                    <th:block th:if="${#lists.isEmpty(categoryList)}">
+                        <div class="d-flex flex-wrap gap-2">
+                            카테고리가 없습니다.
+                        </div>
+                    </th:block>
                 </div>
                 <!-- 게시글 목록 -->
                 <table class="table table-hover">
@@ -73,12 +42,21 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr th:each="post : ${boardList}">
-                        <td><a th:href="'/page/' + ${post.boardNo}" th:text="${post.boardTitle}"></a></td>
-                        <td th:text="${post.boardAuthor}"></td>
-                        <td th:text="${post.readCount}"></td>
-                        <td th:text="${#temporals.format(post.createDate, 'yyyy-MM-dd HH:mm')}"></td>
-                    </tr>
+                    <th:block th:unless="${#lists.isEmpty(boardList)}">
+                        <tr th:each="post : ${boardList}">
+                            <td>
+                                <a th:href="'/page/' + ${post.boardNo}" th:text="${post.boardTitle}"></a>
+                            </td>
+                            <td th:text="${post.boardAuthor}"></td>
+                            <td th:text="${post.readCount}"></td>
+                            <td th:text="${#temporals.format(post.createDate, 'yyyy-MM-dd HH:mm')}"></td>
+                        </tr>
+                    </th:block>
+                    <th:block th:if="${#lists.isEmpty(boardList)}">
+                        <tr>
+                            게시글이 없습니다.
+                        </tr>
+                    </th:block>
                     </tbody>
                 </table>
                 <!--paging -->

@@ -14,13 +14,18 @@
         <!-- 카테고리 -->
         <div class="mb-4">
             <h2>인기 카테고리</h2>
-            <div class="d-flex flex-wrap gap-2">
-                <button th:each="category : ${category}"
-                        th:text="${'#' + category.catName + ' (' + category.postCount + ')'}"
-                        th:onclick="'location.href=\'/category/' + ${category.getCatCode()} + '\''"
-                        class="btn btn-outline-secondary category-btn">
-                </button>
-            </div>
+            <th:block th:unless="${#lists.isEmpty(category)}">
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-outline-primary"
+                            th:each="category : ${category}"
+                            th:onclick="'location.href=\'/page/list?boardCode=' + ${category.getCatCode()} + '\''"
+                            th:text="${'#' + category.catName + ' (' + category.postCount + ')'}">
+                    </button>
+                </div>
+            </th:block>
+            <th:block th:if="${#lists.isEmpty(category)}">
+                카테고리가 없습니다.
+            </th:block>
         </div>
         <!-- 카테고리 -->
         <div class="mb-3 row">
@@ -185,94 +190,7 @@
             </div>
         </form>
     </div>
-    <script type="text/javascript">
-        //파일 검증
-        function validateFile(fileInput) {
-            const allowedExtensions = ['png', 'gif', 'jpg', 'jpeg']; // 허용하는 파일 확장자 목록
-            let valid = true;
-
-            Array.from(fileInput.files).forEach(file => {
-                const fileName = file.name;
-                const fileExtension = fileName.split('.').pop().toLowerCase();
-
-                if (!allowedExtensions.includes(fileExtension)) {
-                    alert(`${fileName} 파일은 허용되지 않는 형식입니다.`);
-                    valid = false; // 허용되지 않는 파일 형식일 경우 valid를 false로 설정
-                }
-            });
-
-            return valid;
-        }
-        //게시글 삭제
-        function boardDeleteProc() {
-            let boardNo = document.getElementById('boardNo').value;
-
-            $.ajax({
-                url:'/page/'+boardNo,
-                type:'DELETE'
-            }).done(function(resp){
-                console.log(resp);
-                alert('게시글이 삭제 되었습니다.');
-                location.href='/page/list'
-            })
-        }
-
-        //게시글 수정
-        function boardUpdateProc() {
-            let formDate = new FormData();
-            let boardNo = document.getElementById('boardNo').value;
-            let title = document.getElementById('title').value;
-            let author = document.getElementById('nickname').value;
-            let boardCode = document.getElementById('category').value;
-            let userNo = document.getElementById('userNo').value;
-            let contents = $('#content').summernote('code');;
-
-            const data  = {
-                boardTitle : title,
-                boardContent : contents,
-                boardAuthor : author,
-                boardCode : boardCode,
-                userNo : userNo
-            }
-
-            formDate.append('boardDto',new Blob([JSON.stringify(data)], {type: "application/json"}));
-
-            let files = document.querySelectorAll('input[type="file"]');
-            let valid = true;
-
-            files.forEach((fileInput, index) => {
-                if (!validateFile(fileInput)) {
-                    valid = false;
-                    return; // 파일이 유효하지 않으면 중단
-                }
-                Array.from(fileInput.files).forEach(file => {
-                    console.log(file);
-                    formDate.append('attachments', file);
-                });
-            });
-
-            if (!valid) {
-                alert('파일 형식에 문제가 있습니다. 다시 확인해주세요.');
-                return; // 유효하지 않으면 폼 제출 중단
-            }
-
-            $.ajax({
-                url:'/page/'+boardNo,
-                type:'PUT',
-                data:formDate,
-                contentType: false,
-                processData: false,
-                cache: false,
-                enctype: 'multipart/form-data'
-            }).done(function(resp){
-                alert('게시글이 수정되었습니다.');
-                location.href = '/page/list';
-            }).fail(function (error){
-                console.error('게시글 수정 실패:', error);
-                alert('게시글 수정에 실패했습니다.');
-            });
-        }
-    </script>
+    <script type="text/javascript" th:src="@{/js/board/boardEdite.js}"></script>
 </th:block>
 </body>
 </html>
