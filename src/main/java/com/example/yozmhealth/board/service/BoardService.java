@@ -55,10 +55,10 @@ public class BoardService {
         List<BoardAttachDto.Response> list = fileUtils.fileParse(request.getAttachLists());
 
         if(list != null) {
-            for(BoardAttachDto.Response dto : list) {
+            list.forEach(dto ->{
                 dto.setBoardNo2(request.getBoardNo());
                 boardAttachService.insertAttach(dto);
-            }
+            });
         }
         return createResult;
     }
@@ -67,6 +67,7 @@ public class BoardService {
     public Long updateBoard(BoardDto.BoardRequest request) throws IOException {
         List<BoardAttachDto.Response> list;
         Long updateResult = boardMapper.updateBoard(request);
+
         //첨부파일이 없는 경우 게시글 수정기능
         if(request.getAttachLists().isEmpty()||request.getAttachLists() == null){
             return updateResult;
@@ -77,24 +78,22 @@ public class BoardService {
         //파일이 있는 경우
         if(!list.isEmpty()) {
             //저장된 이미지 삭제
-            for(int i=0; i< list.size(); i++) {
-                String filePath = list.get(i).getFilePath();
-                File file = new File(filePath);
-                if(file.exists()){
-                    file.delete();
-                }
-                //디비에서 삭제
-                boardAttachService.deleteAttach(request.getBoardNo());
-            }
+            list.stream()
+                    .map(BoardAttachDto.Response::getFilePath)
+                    .map(File::new)
+                    .filter(File::exists)
+                    .forEach(File::delete);
+            boardAttachService.deleteAttach(request.getBoardNo());
         }
+
         if(!request.getAttachLists().isEmpty() && request.getAttachLists() != null) {
             //파일  업로드
             list = fileUtils.fileParse(request.getAttachLists());
             //파일 디비 저장
-            for(BoardAttachDto.Response dto : list) {
+            list.forEach(dto -> {
                 dto.setBoardNo2(request.getBoardNo());
                 boardAttachService.insertAttach(dto);
-            }
+            });
         }
         return updateResult;
     }
@@ -107,16 +106,14 @@ public class BoardService {
         List<BoardAttachDto.Response> attachList = boardAttachService.attachList(boardNo);
 
         if(!attachList.isEmpty()) {
-            for (int i = 0; i< attachList.size(); i++) {
-                String filePath = attachList.get(i).getFilePath();
-                File file = new File(filePath);
-                //경로가 있다면 삭제
-                if(file.exists()) {
-                    file.delete();
-                }
-                //디비에 있는 첨부파일 삭제
-                boardAttachService.deleteAttach(boardNo);
-            }
+            attachList
+                    .stream()
+                    .map(BoardAttachDto.Response::getFilePath)
+                    .map(File::new)
+                    .filter(File::exists)
+                    .forEach(File::delete);
+
+            boardAttachService.deleteAttach(boardNo);
         }
     }
 
